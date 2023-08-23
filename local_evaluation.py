@@ -111,6 +111,22 @@ def evaluate(config):
         print("=========================Completed=========================")
 
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+    if len(episode_metrics) > 0:
+        carbon_emission = np.mean([e['carbon_emissions_total']['value'] for e in episode_metrics])
+        unmet_hours = np.mean([e['discomfort_proportion']['value'] for e in episode_metrics])
+        ramping = np.mean([e['ramping_average']['value'] for e in episode_metrics])
+        load_factor = np.mean([e['daily_one_minus_load_factor_average']['value'] for e in episode_metrics])
+        daily_peak = np.mean([e['daily_peak_average']['value'] for e in episode_metrics])
+        annual_peak = np.mean([e['annual_peak_average']['value'] for e in episode_metrics])
+        average_score = np.mean([e['average_score']['value'] for e in episode_metrics])
+        print(episode_metrics[0]['carbon_emissions_total']['display_name'], carbon_emission, episode_metrics[0]['carbon_emissions_total']['weight'])
+        print(episode_metrics[0]['discomfort_proportion']['display_name'], unmet_hours, episode_metrics[0]['discomfort_proportion']['weight'])
+        print(episode_metrics[0]['ramping_average']['display_name'], ramping, episode_metrics[0]['ramping_average']['weight'])
+        print(episode_metrics[0]['daily_one_minus_load_factor_average']['display_name'], load_factor,
+              episode_metrics[0]['daily_one_minus_load_factor_average']['weight'])
+        print(episode_metrics[0]['daily_peak_average']['display_name'], daily_peak, episode_metrics[0]['daily_peak_average']['weight'])
+        print(episode_metrics[0]['annual_peak_average']['display_name'], annual_peak, episode_metrics[0]['annual_peak_average']['weight'])
+        print("==> Score:", average_score)
 
 
 if __name__ == '__main__':
