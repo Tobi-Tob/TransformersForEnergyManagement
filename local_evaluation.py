@@ -13,11 +13,13 @@ use this script for orchestrating the evaluations.
 from agents.user_agent import SubmissionAgent
 from rewards.user_reward import SubmissionReward
 
+
 class WrapperEnv:
     """
     Env to wrap provide Citylearn Env data without providing full env
     Preventing attribute access outside of the available functions
     """
+
     def __init__(self, env_data):
         self.observation_names = env_data['observation_names']
         self.observation_space = env_data['observation_space']
@@ -27,22 +29,23 @@ class WrapperEnv:
         self.random_seed = env_data['random_seed']
         self.buildings_metadata = env_data['buildings_metadata']
         self.episode_tracker = env_data['episode_tracker']
-    
+
     def get_metadata(self):
         return {'buildings': self.buildings_metadata}
+
 
 def create_citylearn_env(config, reward_function):
     env = CityLearnEnv(config.SCHEMA, reward_function=reward_function)
 
     env_data = dict(
-        observation_names = env.observation_names,
-        observation_space = env.observation_space,
-        action_space = env.action_space,
-        time_steps = env.time_steps,
-        random_seed = None,
-        episode_tracker = None,
-        seconds_per_time_step = None,
-        buildings_metadata = env.get_metadata()['buildings']
+        observation_names=env.observation_names,
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        time_steps=env.time_steps,
+        random_seed=None,
+        episode_tracker=None,
+        seconds_per_time_step=None,
+        buildings_metadata=env.get_metadata()['buildings']
     )
 
     wrapper_env = WrapperEnv(env_data)
@@ -51,7 +54,7 @@ def create_citylearn_env(config, reward_function):
 
 def evaluate(config):
     print("Starting local evaluation")
-    
+
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
     print("Env Created")
 
@@ -71,16 +74,16 @@ def evaluate(config):
     episode_metrics = []
     try:
         while True:
-            
-            ### This is only a reference script provided to allow you 
-            ### to do local evaluation. The evaluator **DOES NOT** 
-            ### use this script for orchestrating the evaluations. 
+
+            # This is only a reference script provided to allow you
+            # to do local evaluation. The evaluator **DOES NOT**
+            # use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
             if not done:
                 step_start = time.perf_counter()
                 actions = agent.predict(observations)
-                agent_time_elapsed += time.perf_counter()- step_start
+                agent_time_elapsed += time.perf_counter() - step_start
             else:
                 episodes_completed += 1
                 metrics_df = env.evaluate_citylearn_challenge()
@@ -91,8 +94,8 @@ def evaluate(config):
 
                 step_start = time.perf_counter()
                 actions = agent.predict(observations)
-                agent_time_elapsed += time.perf_counter()- step_start
-            
+                agent_time_elapsed += time.perf_counter() - step_start
+
             num_steps += 1
             if num_steps % 1000 == 0:
                 print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
@@ -103,19 +106,20 @@ def evaluate(config):
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")
         interrupted = True
-    
+
     if not interrupted:
         print("=========================Completed=========================")
 
     print(f"Total time taken by agent: {agent_time_elapsed}s")
-    
+
 
 if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
         num_episodes = 1
-    
+
+
     config = Config()
 
     evaluate(config)
