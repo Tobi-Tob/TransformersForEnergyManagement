@@ -1,6 +1,6 @@
 ![Citylearn Banner](https://images.aicrowd.com/raw_images/challenges/social_media_image_file/1126/56b6e3e3143621e86382.png)
 
-# [NeurIPS 2022 Citylearn Challenge](https://www.aicrowd.com/challenges/neurips-2023-citylearn-challenge) - Starter Kit 
+# [NeurIPS 2023 Citylearn Challenge](https://www.aicrowd.com/challenges/neurips-2023-citylearn-challenge) - Starter Kit 
 [![Discord](https://img.shields.io/discord/565639094860775436.svg)](https://discord.gg/fNRrSvZkry)
 
 This repository is the NeurIPS 2023 Citylearn Challenge **Submission template and Starter kit**! Clone the repository to compete now!
