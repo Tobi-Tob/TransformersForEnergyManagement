@@ -105,7 +105,7 @@
       "shared_in_central_agent": false
     },
     "non_shiftable_load": {
-      "active": false,
+      "active": true,
       "shared_in_central_agent": false
     },
     "solar_generation": {
@@ -157,10 +157,26 @@
       "shared_in_central_agent": false
     },
     "cooling_demand": {
-      "active": false,
+      "active": true,
       "shared_in_central_agent": false
     },
     "heating_demand": {
+      "active": false,
+      "shared_in_central_agent": false
+    },
+    "dhw_demand": {
+      "active": true,
+      "shared_in_central_agent": false
+    },
+    "cooling_electricity_consumption": {
+      "active": false,
+      "shared_in_central_agent": false
+    },
+    "heating_electricity_consumption": {
+      "active": false,
+      "shared_in_central_agent": false
+    },
+    "dhw_electricity_consumption": {
       "active": false,
       "shared_in_central_agent": false
     },
@@ -218,15 +234,11 @@
     }
   },
   "reward_function": {
-    "type": "citylearn.reward_function.SolarPenaltyAndComfortReward",
+    "type": "citylearn.reward_function.ComfortReward",
     "attributes": {
-      "band": 2.0,
+      "band": 1.0,
       "lower_exponent": 2.0,
-      "higher_exponent": 3.0,
-      "coefficients": [
-        1.0,
-        1.0
-      ]
+      "higher_exponent": 3.0
     }
   },
   "buildings": {
