@@ -1,2 +1,4 @@
 CityLearn==2.0b8
-numpy
+numpy~=1.24.4
+
+gym~=0.26.2

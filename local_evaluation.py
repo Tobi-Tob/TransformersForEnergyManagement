@@ -4,6 +4,8 @@ import os
 
 from citylearn.citylearn import CityLearnEnv
 
+from city_gym_env import CityGymEnv
+
 """
 This is only a reference script provided to allow you 
 to do local evaluation. The evaluator **DOES NOT** 
@@ -134,7 +136,6 @@ if __name__ == '__main__':
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
         num_episodes = 1
-
 
     config = Config()
 
