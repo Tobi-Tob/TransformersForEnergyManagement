@@ -44,10 +44,10 @@ You can create a submission by making a _tag push_ to your repository on [https:
 **Any tag push (where the tag name begins with "submission-") to your private repository is considered as a submission**
 
 ```bash
-cd citylearn-2022-starter-kit
+cd citylearn-2023-starter-kit
 
 # Add AIcrowd git remote endpoint
-git remote add aicrowd git@gitlab.aicrowd.com:<YOUR_AICROWD_USER_NAME>/citylearn-2022-starter-kit.git 
+git remote add aicrowd git@gitlab.aicrowd.com:<YOUR_AICROWD_USER_NAME>/citylearn-2023-starter-kit.git 
 git push aicrowd master
 ```
 
@@ -66,7 +66,7 @@ git push aicrowd submission-v0.1
 ```
 
 You now should be able to see the details of your submission at:
-`https://gitlab.aicrowd.com/<YOUR_AICROWD_USER_NAME>/citylearn-2022-starter-kit/issues`
+`https://gitlab.aicrowd.com/<YOUR_AICROWD_USER_NAME>/citylearn-2023-starter-kit/issues`
 
 **NOTE**: Please remember to update your username instead of `<YOUR_AICROWD_USER_NAME>` in the above link :wink:
 

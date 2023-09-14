@@ -161,11 +161,11 @@ This JSON is used to map your submission to the challenge - so please remember t
 # Other Concepts
 ### Evaluation Metrics
 
-The [control track score](#eqn-control-track-score) (Score<sub>Control</sub>) is the weighted average of a thermal comfort score (Score<sub>Control</sub><sup>Comfort</sup>), an emissions score (Score<sub>Control</sub><sup>Emissions</sup>), and a grid score (Score<sub>Control</sub><sup>Grid</sup>). The highest weight is given to Score<sub>Control</sub><sup>Comfort</sup> while the lowest is given to Score<sub>Control</sub><sup>Emissions</sup>.
+The [control track score](#eqn-control-track-score) (Score<sub>Control</sub>) is the weighted average of a thermal comfort score (Score<sub>Control</sub><sup>Comfort</sup>), an emissions score (Score<sub>Control</sub><sup>Emissions</sup>), a grid score (Score<sub>Control</sub><sup>Grid</sup>), and a resilience score (Score<sub>Control</sub><sup>Resilience</sup>). 
 
 <a name="eqn-control-track-score"></a>
 ```math
-\textrm{Score}_{\textrm{Control}} = w_1 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Comfort}} + w_2 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Emissions}} + w_3 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Grid}}
+\textrm{Score}_{\textrm{Control}} = w_1 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Comfort}} + w_2 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Emissions}} + w_3 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Grid}} + w_4 \cdot \textrm{Score}_{\textrm{Control}}^{\textrm{Resilience}}
 ```
 
 ```math
@@ -180,29 +180,31 @@ The [control track score](#eqn-control-track-score) (Score<sub>Control</sub>) is
 ```
 
 ```math
-w_1 = 0.3
-```
-```math
-w_2 = 0.1
+\textrm{Score}_{\textrm{Control}}^{\textrm{Resilience}} = M + S
 ```
 
-```math
-w_3 = 0.15
-```
+The weights are specified in [table below](#tab-control-track-weight). In [Phase I](#phase-1), the highest weight is given to Score<sub>Control</sub><sup>Comfort</sup> whereas, by [Phase II](#phase-2), Score<sub>Control</sub><sup>Resilience</sup> is introduced and has the same weight as Score<sub>Control</sub><sup>Comfort</sup>. Score<sub>Control</sub><sup>Emissions</sup> has the lowest weight in both phases.
+
+<a name="tab-control-track-weight"></a>
+| Phase | $`w_1`$ | $`w_2`$ | $`w_3`$ | $`w_4`$ |
+|-|-|-|-|-|
+Phase I | 0.300 | 0.100 | 0.150 | 0.000 |
+Phase II | 0.150 | 0.050 | 0.125 | 0.150 |
 
 
-All together, the three scores are made up of six KPIs namely: carbon emissions (_G_), unmet hours (_U_), ramping (_R_), 1 - load factor (_L_), daily peak (_P\_d_) and all-time peak (_P\_n_), which have been defined in the [table below](#tab-control-track-score). _G_, and _U_ are building-level KPIs that are calculated using each building's net electricity consumption (_e_) or temperature (_T_) then averaged to get the neighborhood-level value. _R_, _L_, _P\_d_, and _P\_n_ are neighborhood-level KPIs that are calculated using the neighborhood's net electricity consumption (_E_). With the exception of _U_, all KPIs are normalized by their baseline value where the baseline is the result from when none of the distributed energy resources (DHW storage system, battery, and heat pump) is controlled. All phases make use of [the control track score](#eqn-control-track-score) for evaluation.
-
+All together, the four scores are made up of eight KPIs namely: carbon emissions (_G_), unmet hours (_U_), ramping (_R_), 1 - load factor (_L_), daily peak (_P\_d_), all-time peak (_P\_n_) thermal resilience (_M_), and normalized unserved energy (_S_), which have been defined in the [table below](#tab-control-track-score). _G_, _U_, _M_, and _S_ are building-level KPIs that are calculated using each building's net electricity consumption (_e_) or temperature (_T_) then averaged to get the neighborhood-level value. _R_, _L_, _P\_d_, and _P\_n_ are neighborhood-level KPIs that are calculated using the neighborhood's net electricity consumption (_E_). Except _U_, _M_, and _S_ all KPIs are normalized by their baseline value where the baseline is the result from when none of the distributed energy resources (DHW storage system, battery, and heat pump) is controlled. All phases make use of [the control track score](#eqn-control-track-score) for evaluation.
 
 <a name="tab-control-track-score"></a>
 | Name | Formula | Description |
 |-|-|-|
 Carbon emissions | $`G = \sum_{i=0}^{b-1} g^i_{\textrm{control}} \div \sum_{i=0}^{b-1} g^i_{\textrm{baseline}} \\ g = \sum_{t=0}^{n-1}{\textrm{max} \left (0,e_t \cdot B_t \right )}`$ | Emissions from imported electricity. | <!--END-->
-Unmet hours | $`U = \sum_{i=0}^{b-1} u^i_{\textrm{control}} \div b \\ u = a \div b \\ a = \sum_{t=0}^{n-1} \begin{cases} 1, \ \textrm{if} \ \lvert T_t - T_t^{\textrm{setpoint}} \rvert > b \ \textrm{and} \ O_t > 0 \\ 0  \end{cases} \\ b = \sum_{t=0}^{n-1} \begin{cases} 1, \ O_t > 0 \\ 0 \end{cases}`$ | Proportion of time steps when a building is occupied and indoor temperature falls outside a comfort band, $`b`$. | <!--END-->
+Unmet hours | $`U = \sum_{i=0}^{b-1} u^i_{\textrm{control}} \div b \\ u = a \div o \\ a = \sum_{t=0}^{n-1} \begin{cases} 1, \ \textrm{if} \ \lvert T_t - T_t^{\textrm{setpoint}} \rvert > c \ \textrm{and} \ O_t > 0 \\ 0  \end{cases} \\ o = \sum_{t=0}^{n-1} \begin{cases} 1, \ \textrm{if} \ O_t > 0 \\ 0 \end{cases}`$ | Proportion of time steps when a building is occupied, and indoor temperature falls outside a comfort band, $`c`$. | <!--END-->
 Ramping | $`R = r_{\textrm{control}} \div r_{\textrm{baseline}} \\ r = \sum_{t=0}^{n-1}  \lvert E_{t} - E_{t - 1} \rvert`$ | Smoothness of the neighborhood’s consumption profile where low $`R`$ means there is gradual increase in consumption even after self-generation is unavailable in the evening and early morning. High $`R`$ means abrupt change in grid load that may lead to unscheduled strain on grid infrastructure and blackouts caused by supply deficit. | <!--END-->
 1 - Load factor | $`L = l_{\textrm{control}} \div l_{\textrm{baseline}} \\ l = \Bigg ( \sum_{d=0}^{n \div h} 1 - \frac{ \left ( \sum_{t=d \cdot h}^{d \cdot h +  h - 1} E_{t} \right ) \div h }{ \textrm{max} \left (E_{d \cdot h}, \dots, E_{d \cdot h +  h - 1} \right ) } \Bigg ) \div \Bigg ( \frac{n}{h} \Bigg)`$ | Average ratio of daily average and peak consumption. Load factor is the efficiency of electricity consumption and is bounded between 0 (very inefficient) and 1 (highly efficient) thus, the goal is to maximize the load factor or minimize (1 − load factor)| <!--END-->
 Daily peak | $`P_d = p_{d_{\textrm{control}}} \div p_{d_{\textrm{baseline}}} \\ p_d = \Bigg ( \sum_{d=0}^{n \div h} \textrm{max} \left (E_{d \cdot h}, \dots, E_{d \cdot h +  h - 1} \right )\Bigg ) \div \Bigg ( \frac{n}{h} \Bigg)`$ | Average, maximum consumption at any time step per day. | <!--END-->
 All-time peak | $`P_n = p_{n_{\textrm{control}}} \div p_{n_{\textrm{baseline}}} \\ p_n = \textrm{max} \left (E_{0}, \dots, E_{n} \right )`$ | Maximum consumption at any time step. | <!--END-->
+Thermal resilience | $`M = \sum_{i=0}^{b-1} m^i_{\textrm{control}} \div b \\ m = a \div o \\ a = \sum_{t=0}^{n-1} \begin{cases} 1, \ \textrm{if} \ \lvert T_t - T_t^{\textrm{setpoint}} \rvert > c \ \textrm{and} \ O_t > 0 \ \textrm{and} \ F_t > 0 \\ 0  \end{cases} \\ o = \sum_{t=0}^{n-1} \begin{cases} 1, \ \textrm{if} \ O_t > 0 \ \textrm{and} \ F_t > 0 \\ 0 \end{cases}`$ | Same as $`U`$ but only considers time steps when there is power outage. | <!--END-->
+Normalized unserved energy | $`S = \sum_{i=0}^{b-1} s^i_{\textrm{control}} \div b \\ s = s^{\textrm{served}} \div s^{\textrm{expected}} \\ s^{\textrm{served}} = \sum_{t=0}^{n-1} \begin{cases} q_{n}^{\textrm{served}}, \ \textrm{if} \ F_t > 0 \\ 0 \end{cases} \\ s^{\textrm{expected}} = \sum_{t=0}^{n-1} \begin{cases} q_{n}^{\textrm{expected}}, \ \textrm{if} \ F_t > 0 \\ 0 \end{cases}`$ | Proportion of unmet demand due to supply shortage e.g. power outage. | <!--END-->
 
 > Where:
 > - $`t`$: Time step index;
@@ -217,8 +219,10 @@ All-time peak | $`P_n = p_{n_{\textrm{control}}} \div p_{n_{\textrm{baseline}}} 
 > - $`B`$: Emission rate (kg<sub>CO<sub>2</sub>e</sub>/kWh);
 > - $`T`$: Indoor dry-bulb temperature (<sup>o</sup>C);
 > - $`T^{\textrm{setpoint}}`$: Indoor dry-bulb temperature setpoint (<sup>o</sup>C);
-> - $`b`$: Thermal comfort band ($`\pm T^{\textrm{setpoint}}`$); and
-> - $`O`$: Occupant count (people).
+> - $`c`$: Thermal comfort band ($`\pm T^{\textrm{setpoint}}`$);
+> - $`O`$: Occupant count (people);
+> - $`F`$: Power outage (Yes/No); and
+> - $`q`$: Building-level cooling, domestic hot water and non-shiftable load energy demand (kWh).
 
 ### Time and compute constraints
 
