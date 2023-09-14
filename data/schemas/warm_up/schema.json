@@ -193,7 +193,7 @@
       "shared_in_central_agent": false
     },
     "power_outage": {
-      "active": false,
+      "active": true,
       "shared_in_central_agent": false
     }
   },
