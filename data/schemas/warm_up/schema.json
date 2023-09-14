@@ -191,6 +191,10 @@
     "indoor_dry_bulb_temperature_delta": {
       "active": false,
       "shared_in_central_agent": false
+    },
+    "power_outage": {
+      "active": false,
+      "shared_in_central_agent": false
     }
   },
   "actions": {
@@ -258,7 +262,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 4.109619584843774,
+          "nominal_power": 4.109619617462158,
           "efficiency": 0.2535049749071043,
           "target_cooling_temperature": 7.991821357673299,
           "target_heating_temperature": 45
@@ -271,7 +275,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 4.86117140395739,
+          "nominal_power": 4.861171245574951,
           "efficiency": 0.939146312056097
         }
       },
@@ -282,7 +286,7 @@
           "safety_factor": 0.5
         },
         "attributes": {
-          "capacity": 2.282675598149571,
+          "capacity": 2.2826755046844482,
           "loss_coefficient": 0.003212187876499649
         }
       },
@@ -325,6 +329,18 @@
         "autosize": false,
         "attributes": {
           "nominal_power": 2.4000000000000004
+        }
+      },
+      "power_outage": {
+        "simulate_power_outage": true,
+        "stochastic_power_outage": true,
+        "stochastic_power_outage_model": {
+          "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
+          "attributes": {
+            "random_seed": 43708,
+            "saifi": 1.436,
+            "caidi": 331.2
+          }
         }
       },
       "dynamics": {
@@ -456,7 +472,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 2.252523882801652,
+          "nominal_power": 2.252523899078369,
           "efficiency": 0.28791926968413395,
           "target_cooling_temperature": 6.016841879471529,
           "target_heating_temperature": 45
@@ -469,7 +485,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 3.681978381487497,
+          "nominal_power": 3.681978464126587,
           "efficiency": 0.8994733722992707
         }
       },
@@ -480,7 +496,7 @@
           "safety_factor": 0.5
         },
         "attributes": {
-          "capacity": 1.6559207557647848,
+          "capacity": 1.6559207439422607,
           "loss_coefficient": 0.004154877290498826
         }
       },
@@ -523,6 +539,18 @@
         "autosize": false,
         "attributes": {
           "nominal_power": 1.2000000000000002
+        }
+      },
+      "power_outage": {
+        "simulate_power_outage": true,
+        "stochastic_power_outage": true,
+        "stochastic_power_outage_model": {
+          "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
+          "attributes": {
+            "random_seed": 43708,
+            "saifi": 1.436,
+            "caidi": 331.2
+          }
         }
       },
       "dynamics": {
@@ -654,7 +682,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 2.777701799494,
+          "nominal_power": 2.7777018547058105,
           "efficiency": 0.26107700777224274,
           "target_cooling_temperature": 6.217435224703639,
           "target_heating_temperature": 45
@@ -667,7 +695,7 @@
           "safety_factor": 1.0
         },
         "attributes": {
-          "nominal_power": 6.2864030728568405,
+          "nominal_power": 6.286403179168701,
           "efficiency": 0.9042817996199358
         }
       },
@@ -678,7 +706,7 @@
           "safety_factor": 0.5
         },
         "attributes": {
-          "capacity": 2.842339941929639,
+          "capacity": 2.8423399925231934,
           "loss_coefficient": 0.004187329715739613
         }
       },
@@ -721,6 +749,18 @@
         "autosize": false,
         "attributes": {
           "nominal_power": 2.4000000000000004
+        }
+      },
+      "power_outage": {
+        "simulate_power_outage": true,
+        "stochastic_power_outage": true,
+        "stochastic_power_outage_model": {
+          "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
+          "attributes": {
+            "random_seed": 43708,
+            "saifi": 1.436,
+            "caidi": 331.2
+          }
         }
       },
       "dynamics": {
