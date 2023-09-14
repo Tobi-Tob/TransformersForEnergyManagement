@@ -50,6 +50,17 @@ def create_citylearn_env(config, reward_function):
     wrapper_env = WrapperEnv(env_data)
     return env, wrapper_env
 
+def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> CityLearnEnv:
+    """Update random seed used in generating power outage signals.
+    
+    Used to optionally update random seed for stochastic power outage model in all buildings.
+    Random seeds should be updated before calling :py:meth:`citylearn.citylearn.CityLearnEnv.reset`.
+    """
+
+    for b in env.buildings:
+        b.stochastic_power_outage_model.random_seed = random_seed
+
+    return env
 
 def evaluate(config):
     print("Starting local evaluation")
@@ -88,6 +99,10 @@ def evaluate(config):
                 metrics_df = env.evaluate_citylearn_challenge()
                 episode_metrics.append(metrics_df)
                 print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics_df}", )
+                
+                # Optional: Uncomment line below to update power outage random seed 
+                # from what was initially defined in schema
+                env = update_power_outage_random_seed(env, 90000)
 
                 observations = env.reset()
 
