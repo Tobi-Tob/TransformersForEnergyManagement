@@ -337,7 +337,7 @@
         "stochastic_power_outage_model": {
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
-            "random_seed": 43708,
+            "random_seed": 73055,
             "saifi": 1.436,
             "caidi": 331.2
           }
@@ -547,7 +547,7 @@
         "stochastic_power_outage_model": {
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
-            "random_seed": 43708,
+            "random_seed": 73055,
             "saifi": 1.436,
             "caidi": 331.2
           }
@@ -757,7 +757,7 @@
         "stochastic_power_outage_model": {
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
-            "random_seed": 43708,
+            "random_seed": 73055,
             "saifi": 1.436,
             "caidi": 331.2
           }
