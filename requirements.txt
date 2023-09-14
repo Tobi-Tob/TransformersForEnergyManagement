@@ -1,2 +1,2 @@
-CityLearn==2.1b2
+CityLearn==2.1b3
 numpy
