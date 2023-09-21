@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import os
+import utils
 
 from citylearn.citylearn import CityLearnEnv
 
@@ -17,7 +18,7 @@ from rewards.user_reward import SubmissionReward
 class WrapperEnv:
     """
     Env to wrap provide Citylearn Env data without providing full env
-    Preventing attribute access outside of the available functions
+    Preventing attribute access outside the available functions
     """
 
     def __init__(self, env_data):
@@ -67,7 +68,7 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
     return env
 
 
-def evaluate(config):
+def evaluate(config, print_interactions=False):
     print("Starting local evaluation")
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
@@ -92,9 +93,12 @@ def evaluate(config):
 
             ### This is only a reference script provided to allow you 
             ### to do local evaluation. The evaluator **DOES NOT** 
-            ### use this script for orchestrating the evaluations. 
+            ### use this script for orchestrating the evaluations.
 
-            observations, _, done, _ = env.step(actions)
+            observations, reward, done, _ = env.step(actions)
+            if print_interactions:
+                utils.print_interactions(actions, reward, observations)
+
             if not done:
                 step_start = time.perf_counter()
                 actions = agent.predict(observations)
@@ -130,16 +134,7 @@ def evaluate(config):
         print("=========================Completed=========================")
 
     print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
-    if len(episode_metrics) > 0:
-        # print all episode_metrics values
-        for metric in episode_metrics[0].keys():
-            display_name = episode_metrics[0][metric]['display_name']
-            value = np.mean([e[metric]['value'] for e in episode_metrics])
-            if metric == "average_score":
-                print('\033[92m' + f"{'====>':<6} {'Score:':<18} {value}")
-            else:
-                weight = str(episode_metrics[0][metric]['weight']) + "x"
-                print(f"{weight:<6} {display_name:<18} {np.round(value, decimals=4)}")
+    utils.print_metrics(episode_metrics)
 
 
 if __name__ == '__main__':
@@ -149,9 +144,9 @@ if __name__ == '__main__':
         num_episodes = 1  # enable more episodes (metrics based on power outage are None)
 
 
-    config = Config()
+    config_data = Config()
 
-    evaluate(config)
+    evaluate(config_data, True)
 
 
 
