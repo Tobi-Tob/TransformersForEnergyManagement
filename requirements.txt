@@ -1,2 +1,6 @@
 CityLearn==2.1b9
 numpy
+stable_baselines3[extra]
+torch
+tensorboard
+shimmy
