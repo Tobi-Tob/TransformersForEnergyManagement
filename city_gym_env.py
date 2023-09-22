@@ -11,6 +11,7 @@ def modify_obs(obs: List[List[float]]) -> List[float]:
     """
     Modify the observation space 2D -> 1D for compatibility with stable baselines
     """
+    #  TODO delete unimportant observations add temp_diff e.g.
     return [j for i in obs for j in i]
 
 

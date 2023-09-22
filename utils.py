@@ -32,11 +32,11 @@ obs_mapping = {
     "indoor_dry_bulb_temperature": [15, 30, 41],  # current indoor temperature (C)
     "non_shiftable_load": [16, 31, 42],  # current electricity consumption of electrical devices (kWh)
     "solar_generation": [17, 32, 43],  # current solar generation (kWh)
-    "dhw_storage_soc": [18, 33, 44],  # current hot water storage state of charge (kWh)
-    "electrical_storage_soc": [19, 34, 45],  # current electrical storage state of charge (kWh)
+    "dhw_storage_soc": [18, 33, 44],  # current hot water storage state of charge (%)
+    "electrical_storage_soc": [19, 34, 45],  # current electrical storage state of charge (%)
     "net_electricity_consumption": [20, 35, 46],  # current buildings net electricity demand to the grid (kWh)
-    "cooling_demand": [25, 36, 47],  # current cooling demand (kWh)
-    "dhw_demand": [26, 37, 48],  # current hot water demand (kWh)
+    "cooling_demand": [25, 36, 47],  # current cooling energy demand (kWh)
+    "dhw_demand": [26, 37, 48],  # current domestic hot water energy demand (kWh)
     "occupant_count": [27, 38, 49],  # current number of occupants (people)
     "indoor_dry_bulb_temperature_set_point": [28, 39, 50],  # current temperature set point (C)
     "power_outage": [29, 40, 51],  # current power outage (0 or 1)
@@ -44,19 +44,20 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    def get_act(str_act):
-        data = [action[0][i] for i in act_mapping[str_act]]
-        return data
+    if False:
+        def get_act(str_act):
+            data = [action[0][i] for i in act_mapping[str_act]]
+            return data
 
-    def get_obs(str_obs):
-        data = [next_observation[0][i] for i in obs_mapping[str_obs]]
-        return data
+        def get_obs(str_obs):
+            data = [next_observation[0][i] for i in obs_mapping[str_obs]]
+            return data
 
-    print(get_act("electrical_storage_action"), "electrical_storage_action")
-    print(reward, "reward")
-    print()
-    print(get_obs("hour"), "hour")
-    print(get_obs("electrical_storage_soc"), "electrical_storage_soc")
+        # print(get_act("electrical_storage_action"), "electrical_storage_action")
+        print(reward, "reward")
+        # print()
+        # print(get_obs("hour"), "hour")
+        print(get_obs("indoor_dry_bulb_temperature"), get_obs("indoor_dry_bulb_temperature_set_point"), get_obs("occupant_count"))
 
 
 def print_metrics(episode_metrics):

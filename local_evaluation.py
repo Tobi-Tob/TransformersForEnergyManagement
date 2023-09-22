@@ -68,7 +68,7 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
     return env
 
 
-def evaluate(config, print_interactions=False):
+def evaluate(config):
     print("Starting local evaluation")
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
@@ -88,6 +88,7 @@ def evaluate(config, print_interactions=False):
     num_steps = 0
     interrupted = False
     episode_metrics = []
+    J = 0
     try:
         while True:
 
@@ -96,8 +97,9 @@ def evaluate(config, print_interactions=False):
             ### use this script for orchestrating the evaluations.
 
             observations, reward, done, _ = env.step(actions)
-            if print_interactions:
-                utils.print_interactions(actions, reward, observations)
+
+            J += reward[0]
+            utils.print_interactions(actions, reward, observations)
 
             if not done:
                 step_start = time.perf_counter()
@@ -107,7 +109,8 @@ def evaluate(config, print_interactions=False):
                 episodes_completed += 1
                 metrics_df = env.evaluate_citylearn_challenge()
                 episode_metrics.append(metrics_df)
-                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics_df}", )
+                print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} | Latest episode metrics: {metrics_df}", )
+                J = 0
 
                 # Optional: Uncomment line below to update power outage random seed 
                 # from what was initially defined in schema
@@ -146,7 +149,7 @@ if __name__ == '__main__':
 
     config_data = Config()
 
-    evaluate(config_data, True)
+    evaluate(config_data)
 
 
 
