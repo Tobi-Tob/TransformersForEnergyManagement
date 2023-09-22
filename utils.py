@@ -44,7 +44,8 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    if False:
+    print_interactions = False
+    if print_interactions:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
             return data

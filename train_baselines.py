@@ -5,7 +5,7 @@ import os
 import torch
 from citylearn.citylearn import CityLearnEnv
 from rewards.user_reward import SubmissionReward
-from city_gym_env import CityGymEnv
+from env_wrapper import CityGymEnv
 from stable_baselines3 import PPO
 
 
