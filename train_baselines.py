@@ -1,11 +1,11 @@
 import argparse
 import datetime
-import os
+
 # import tensorflow
 import torch
 from citylearn.citylearn import CityLearnEnv
 from rewards.user_reward import SubmissionReward
-from env_wrapper import CityGymEnv
+from env_wrapper import CityEnvForTraining
 from stable_baselines3 import PPO
 
 
@@ -28,15 +28,12 @@ def main():
     training_steps = args.steps
 
     env = CityLearnEnv('data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
-    env = CityGymEnv(env)  # environment wrapper for stable baselines
+    env = CityEnvForTraining(env)  # Environment only for training
     env.reset()
 
     # load model if exist
     if algo == "PPO":
-        if os.path.exists(model_dir) and continue_training:
-            agent = PPO.load(model_dir)
-        else:
-            agent = init_ppo(env, learning_rate, log_dir)
+        agent = init_ppo(env, learning_rate, log_dir)
     elif algo == "SAC":
         raise NotImplementedError
     else:
@@ -64,6 +61,8 @@ def init_ppo(env, learning_rate, log_dir):
                 use_sde=True,
                 tensorboard_log=log_dir,
                 verbose=2)
+
+    env.set_agent(agent)  # allow CityEnvForTraining access to the model
 
     return agent
 
