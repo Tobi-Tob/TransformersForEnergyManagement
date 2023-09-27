@@ -69,5 +69,5 @@ def init_ppo(env, learning_rate, log_dir):
 
 if __name__ == '__main__':
     main()
-
+# TODO Learned action values are only extreme values!!!
 # python train_baselines.py --algo PPO --model_id ppo1 --lr 0.0003 --steps 2000

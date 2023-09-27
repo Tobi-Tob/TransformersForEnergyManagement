@@ -44,8 +44,8 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    print_interactions = False
-    if print_interactions:
+    do_print = False
+    if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
             return data
@@ -54,11 +54,11 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        # print(get_act("electrical_storage_action"), "electrical_storage_action")
+        print(get_act("cooling_device_action"), "cooling_device_action")
         print(reward, "reward")
         # print()
         # print(get_obs("hour"), "hour")
-        print(get_obs("indoor_dry_bulb_temperature"), get_obs("indoor_dry_bulb_temperature_set_point"), get_obs("occupant_count"))
+        print(get_obs("net_electricity_consumption"), 'net_electricity_consumption')
 
 
 def print_metrics(episode_metrics):

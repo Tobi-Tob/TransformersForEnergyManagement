@@ -10,7 +10,7 @@ class PPOAgent(Agent):
 
     def __init__(self, env: CityLearnEnv,  **kwargs: Any):
         super().__init__(env, **kwargs)
-        self.model = PPO.load("models/ppo1")
+        self.model = PPO.load("models/ppo2")
         # print(self.model.policy)
 
     def register_reset(self, observations):

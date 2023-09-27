@@ -101,7 +101,7 @@ def get_modified_action_space():
 
 
 class CityEnvForTraining(Env):
-    # EnvWrapper Class used for training, controlling one building interactions, not used yet
+    # EnvWrapper Class used for training, controlling one building interactions
     def __init__(self, env):
         self.city_env = env
         self.agent = None

@@ -2,7 +2,6 @@ import numpy as np
 import time
 import os
 import utils
-
 from citylearn.citylearn import CityLearnEnv
 
 """
@@ -89,6 +88,7 @@ def evaluate(config):
     interrupted = False
     episode_metrics = []
     J = 0
+    action_sum = np.zeros(len(env.buildings) * 3)
     try:
         while True:
 
@@ -99,6 +99,7 @@ def evaluate(config):
             observations, reward, done, _ = env.step(actions)
 
             J += reward[0]
+            action_sum += np.abs(np.array(actions[0]))
             utils.print_interactions(actions, reward, observations)
 
             if not done:
@@ -109,7 +110,9 @@ def evaluate(config):
                 episodes_completed += 1
                 metrics_df = env.evaluate_citylearn_challenge()
                 episode_metrics.append(metrics_df)
-                print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} | Latest episode metrics: {metrics_df}", )
+                print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} "
+                      f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=2)}")
+                print(f"Latest episode metrics: {metrics_df}")
                 J = 0
 
                 # Optional: Uncomment line below to update power outage random seed 
