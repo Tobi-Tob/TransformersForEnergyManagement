@@ -3,6 +3,7 @@ import time
 import os
 import utils
 from citylearn.citylearn import CityLearnEnv
+from random import randint
 
 """
 This is only a reference script provided to allow you 
@@ -118,7 +119,7 @@ def evaluate(config):
 
                 # Optional: Uncomment line below to update power outage random seed 
                 # from what was initially defined in schema
-                env = update_power_outage_random_seed(env, 90000)
+                env = update_power_outage_random_seed(env, randint(0, 9999))
 
                 observations = env.reset()
 
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 3  # TODO epidose 2+ hat keine stromausfälle?
+        num_episodes = 2  # TODO epidose 2+ hat keine stromausfälle?
 
 
     config_data = Config()

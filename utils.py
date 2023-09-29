@@ -46,7 +46,7 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    do_print = False
+    do_print = True
     if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
@@ -56,21 +56,27 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        print(get_act("electrical_storage_action"), "electrical_storage_action")
-        print(reward, "reward")
-        # print()
-        # print(get_obs("hour"), "hour")
-        print(get_obs("electrical_storage_soc"), 'electrical_storage_soc')
+        if get_obs("power_outage") == [1, 1, 1]:
+            # print(get_act("electrical_storage_action"), "electrical_storage_action")
+            # print(reward, "reward")
+            # print()
+            print(get_obs("hour"), get_obs('day_type'))
+            print(get_obs("power_outage"), 'power_outage')
 
 
 def print_metrics(episode_metrics):
     if len(episode_metrics) > 0:
         # print all episode_metrics values
+        score = 0
         for metric in episode_metrics[0].keys():
             display_name = episode_metrics[0][metric]['display_name']
-            value = np.mean([e[metric]['value'] for e in episode_metrics])
+            value = np.nanmean([e[metric]['value'] for e in episode_metrics])
             if metric == "average_score":
-                print('\033[92m' + f"{'====>':<6} {'Score:':<18} {value}")
+                city_learn_score = value
             else:
-                weight = str(episode_metrics[0][metric]['weight']) + "x"
-                print(f"{weight:<6} {display_name:<18} {np.round(value, decimals=4)}")
+                weight = episode_metrics[0][metric]['weight']
+                print(f"{str(weight):<6} {display_name:<18} {np.round(value, decimals=4)}")
+                score += weight * value
+        print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
+        if score != city_learn_score:
+            print('\033[33m' + f"{'Score does not equal:':<25} {city_learn_score}")
