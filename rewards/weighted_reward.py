@@ -8,10 +8,16 @@ class WeightedRewardFunction(RewardFunction):
         super().__init__(env_metadata)
         self.district_electricity_consumption_history = []
         self.max_district_electricity_consumption = 0
+        self.simulation_time_steps = None
+        self.current_time_step = 1
     
     def calculate(self, observations):
         if not self.central_agent:
             raise NotImplementedError("WeightedRewardFunction only supports central agent")
+        if self.simulation_time_steps is None:
+            self.simulation_time_steps = self.env_metadata['simulation_time_steps']
+        if self.current_time_step >= self.simulation_time_steps:
+            self.reset()
         net_electricity_consumption = np.array([o['net_electricity_consumption'] for o in observations])
         district_electricity_consumption = np.sum(net_electricity_consumption)
         num_buildings = len(net_electricity_consumption)
@@ -58,6 +64,15 @@ class WeightedRewardFunction(RewardFunction):
             all_time_peak_cost = 0
 
         # TODO Unserved energy (proportion of unmet demand due to supply shortage)
-
+        self.current_time_step += 1
         return [0.3*discomfort_cost + 0.1*carbon_emissions_cost
                 + 0.075*(ramping_cost + load_factor_cost + daily_peak_cost + all_time_peak_cost) + 0.3*thermal_resilience_cost]
+
+    def reset(self):
+        """
+        Resets reward function
+        """
+        self.district_electricity_consumption_history = []
+        self.max_district_electricity_consumption = 0
+        self.simulation_time_steps = None
+        self.current_time_step = 1

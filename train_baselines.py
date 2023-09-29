@@ -49,13 +49,14 @@ def main():
 
 def init_ppo(env, learning_rate, log_dir):
     # Actor and Critic network parameters
-    policy_kwargs = dict(activation_fn=torch.nn.ReLU,
+    policy_kwargs = dict(activation_fn=torch.nn.ReLU,  # vllt tanh als letze Aktivierung
                          net_arch=dict(pi=[64, 64], vf=[64, 64]))
 
     agent = PPO(policy='MlpPolicy',
                 policy_kwargs=policy_kwargs,
                 env=env,
                 learning_rate=learning_rate,
+                n_steps=2160,  # 2160 TODO
                 gamma=1,
                 clip_range=0.2,
                 use_sde=True,
@@ -70,4 +71,5 @@ def init_ppo(env, learning_rate, log_dir):
 if __name__ == '__main__':
     main()
 # TODO Learned action values are only extreme values!!!
+# vllt 2 Train 1 Validation Gebäude
 # python train_baselines.py --algo PPO --model_id ppo1 --lr 0.0003 --steps 2000

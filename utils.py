@@ -31,11 +31,13 @@ obs_mapping = {
     # Building 1-3
     "indoor_dry_bulb_temperature": [15, 30, 41],  # current indoor temperature (C)
     "non_shiftable_load": [16, 31, 42],  # current electricity consumption of electrical devices (kWh)
+    #  = cooling_device/heating_device/dhw_device/non_shiftable_load_device/electrical_storage.electricity_consumption + solar_generation
     "solar_generation": [17, 32, 43],  # current solar generation (kWh)
     "dhw_storage_soc": [18, 33, 44],  # current hot water storage state of charge (%)
     "electrical_storage_soc": [19, 34, 45],  # current electrical storage state of charge (%)
     "net_electricity_consumption": [20, 35, 46],  # current buildings net electricity demand to the grid (kWh)
-    "cooling_demand": [25, 36, 47],  # current cooling energy demand (kWh)
+    "cooling_demand": [25, 36, 47],  # cooling demand (kWh) is a function of controller cooling_device_action as the controller
+    # sets the input energy to the cooling device that outputs some cooling energy that is set as cooling demand.
     "dhw_demand": [26, 37, 48],  # current domestic hot water energy demand (kWh)
     "occupant_count": [27, 38, 49],  # current number of occupants (people)
     "indoor_dry_bulb_temperature_set_point": [28, 39, 50],  # current temperature set point (C)
@@ -54,11 +56,11 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        print(get_act("cooling_device_action"), "cooling_device_action")
+        print(get_act("electrical_storage_action"), "electrical_storage_action")
         print(reward, "reward")
         # print()
         # print(get_obs("hour"), "hour")
-        print(get_obs("net_electricity_consumption"), 'net_electricity_consumption')
+        print(get_obs("electrical_storage_soc"), 'electrical_storage_soc')
 
 
 def print_metrics(episode_metrics):

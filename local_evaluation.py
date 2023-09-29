@@ -114,6 +114,7 @@ def evaluate(config):
                       f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=2)}")
                 print(f"Latest episode metrics: {metrics_df}")
                 J = 0
+                action_sum = np.zeros(len(env.buildings) * 3)
 
                 # Optional: Uncomment line below to update power outage random seed 
                 # from what was initially defined in schema
@@ -147,7 +148,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1  # enable more episodes (metrics based on power outage are None)
+        num_episodes = 3  # TODO epidose 2+ hat keine stromausfälle?
 
 
     config_data = Config()
