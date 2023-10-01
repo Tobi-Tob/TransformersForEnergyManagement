@@ -75,6 +75,7 @@ def evaluate(config):
     print("Env Created")
 
     agent = SubmissionAgent(wrapper_env)
+    agent.set_model_index(0)
 
     observations = env.reset()
 
@@ -93,10 +94,6 @@ def evaluate(config):
     try:
         while True:
 
-            ### This is only a reference script provided to allow you 
-            ### to do local evaluation. The evaluator **DOES NOT** 
-            ### use this script for orchestrating the evaluations.
-
             observations, reward, done, _ = env.step(actions)
 
             J += reward[0]
@@ -112,7 +109,7 @@ def evaluate(config):
                 metrics_df = env.evaluate_citylearn_challenge()
                 episode_metrics.append(metrics_df)
                 print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} "
-                      f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=2)}")
+                      f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=4)}")
                 print(f"Latest episode metrics: {metrics_df}")
                 J = 0
                 action_sum = np.zeros(len(env.buildings) * 3)
@@ -144,12 +141,14 @@ def evaluate(config):
     print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
     utils.print_metrics(episode_metrics)
 
+    # agent.print_normalizations()
+
 
 if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 2  # TODO epidose 2+ hat keine stromausfälle?
+        num_episodes = 1  # TODO epidose 2+ hat keine Stromausfälle?
 
 
     config_data = Config()

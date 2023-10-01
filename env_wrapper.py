@@ -47,8 +47,12 @@ def modify_obs(obs: List[List[float]]) -> List[List[float]]:
         assert len(b) == 12
 
     obs_modified = []
+    normalizations = get_obs_normalization()
     for i in range(len(obs_single_building)):
-        obs_modified.append(obs_district + obs_single_building[i])
+        obs = obs_district + obs_single_building[i]
+        for j in range(len(obs)):
+            obs[j] = (obs[j] - normalizations[j][0]) / normalizations[j][1]
+        obs_modified.append(obs)
 
     return obs_modified
 
@@ -100,6 +104,33 @@ def get_modified_action_space():
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
 
+def get_obs_normalization():
+    return np.array([
+        #  -mean-      -std-
+        [4.09861111, 1.97132168],  # day_type
+        [12.4680556, 6.92211284],  # hour
+        [29.5859027, 4.78622061],  # outdoor_dry_bulb_temperature
+        [29.6044581, 4.81170802],  # outdoor_dry_bulb_temperature_predicted_6h
+        [91.4877916, 108.470863],  # diffuse_solar_irradiance
+        [90.0760352, 107.332292],  # diffuse_solar_irradiance_predicted_6h
+        [270.519361, 305.957043],  # direct_solar_irradiance
+        [269.853461, 308.525444],  # direct_solar_irradiance_predicted_6h
+        [0.45429827, 0.04875349],  # carbon_intensity
+        [34.1117344, 2.52848845],  # indoor_dry_bulb_temperature
+        [0.78337993, 0.65056839],  # non_shiftable_load
+        [0.51800352, 0.40013224],  # solar_generation
+        [0.41650000, 0.13700000],  # dhw_storage_soc
+        [0.05700000, 0.02700000],  # electrical_storage_soc
+        [0.40900000, 0.94500000],  # net_electricity_consumption
+        [0.12700000, 0.26320000],  # cooling_demand
+        [0.14230580, 0.38867504],  # dhw_demand
+        [1.48240741, 0.93673277],  # occupant_count
+        [24.2984569, 1.01494655],  # indoor_dry_bulb_temperature_set_point
+        [0.02083333, 0.14282614],  # power_outage
+        [9.80000000, 2.47686531],  # temperature_difference
+    ])
+
+
 class CityEnvForTraining(Env):
     # EnvWrapper Class used for training, controlling one building interactions
     def __init__(self, env):
@@ -142,4 +173,3 @@ class CityEnvForTraining(Env):
 
     def render(self):
         return self.city_env.render()
-

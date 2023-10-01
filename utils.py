@@ -1,4 +1,7 @@
 import numpy as np
+from citylearn.citylearn import CityLearnEnv
+from citylearn.utilities import read_json
+from rewards.user_reward import SubmissionReward
 
 act_mapping = {
     "dhw_storage_action": [0, 3, 6],  # action to control the hot water storage tank
@@ -68,6 +71,7 @@ def print_metrics(episode_metrics):
     if len(episode_metrics) > 0:
         # print all episode_metrics values
         score = 0
+        city_learn_score = 0
         for metric in episode_metrics[0].keys():
             display_name = episode_metrics[0][metric]['display_name']
             value = np.nanmean([e[metric]['value'] for e in episode_metrics])
@@ -78,5 +82,37 @@ def print_metrics(episode_metrics):
                 print(f"{str(weight):<6} {display_name:<18} {np.round(value, decimals=4)}")
                 score += weight * value
         print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
-        if score != city_learn_score:
+        if not np.isclose(score, city_learn_score, atol=1e-6):
             print('\033[33m' + f"{'Score does not equal:':<25} {city_learn_score}")
+
+
+def init_environment(buildings_to_use, simulation_start_end=None, **kwargs):
+    r"""Initialize `CityLearnEnv` and returns the environment
+
+        Parameters
+        ----------
+        buildings_to_use: list[int]
+            List to define which buildings are used in the environment, example: [1,2,4,17].
+        simulation_start_end: list[int]
+            List to define start and end time step, example: [0,8759].
+
+        """
+    schema_path = 'data/schemas/warm_up/schema.json'
+    schema = read_json(schema_path)
+    if simulation_start_end is not None:
+        schema['simulation_start_time_step'] = simulation_start_end[0]
+        schema['simulation_end_time_step'] = simulation_start_end[1]
+    dict_buildings = schema['buildings']
+
+    # set all buildings to include=false
+    for building_schema in dict_buildings.values():
+        building_schema['include'] = False
+
+    # include=true for buildings to use
+    for building_number in buildings_to_use:
+        building_id = 'Building_' + str(building_number)
+        if building_id in dict_buildings:
+            dict_buildings[building_id]['include'] = True
+
+    env = CityLearnEnv(schema, reward_function=SubmissionReward)
+    return env

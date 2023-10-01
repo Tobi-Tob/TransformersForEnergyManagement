@@ -1,5 +1,5 @@
 {
-  "root_directory": null,
+  "root_directory": "C:/Daten/CityLearnGitAiCrowd2/data/schemas/warm_up",
   "central_agent": true,
   "simulation_start_time_step": 0,
   "simulation_end_time_step": 719,
