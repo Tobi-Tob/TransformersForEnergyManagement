@@ -11,7 +11,7 @@ class PPOAgent(Agent):
 
     def __init__(self, env: CityLearnEnv,  **kwargs: Any):
         super().__init__(env, **kwargs)
-        model_id = 'PPO_test'
+        model_id = 'PPO_1'
         self.models = []
         for n in [1, 2, 3]:
             model_n = PPO.load("models/" + model_id + "/m" + str(n))
@@ -55,4 +55,8 @@ class PPOAgent(Agent):
         print(np.mean(self.all_observations, axis=0))
         print('std:')
         print(np.std(self.all_observations, axis=0))
+        print('max:')
+        print(np.max(self.all_observations, axis=0))
+        print('min:')
+        print(np.min(self.all_observations, axis=0))
 

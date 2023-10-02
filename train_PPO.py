@@ -57,10 +57,11 @@ def init_ppo(env, learning_rate, log_dir):
                 policy_kwargs=policy_kwargs,
                 env=env,
                 learning_rate=learning_rate,
-                n_steps=2160,
+                n_steps=1440,
+                batch_size=48,  # 48
                 gamma=1,
                 clip_range=clip_range,
-                use_sde=True,
+                use_sde=False,
                 tensorboard_log=log_dir,
                 verbose=2)
 
@@ -71,6 +72,7 @@ def init_ppo(env, learning_rate, log_dir):
 
 if __name__ == '__main__':
     main()
-# TODO gain 0.01 as hyperparameter in (policies.py)
 
-# python train_PPO.py --model_id test --lr 0.0003 --steps 2000
+# TODO print value net output while training
+# python train_PPO.py --model_id 1 --lr 3e-3 --steps 20000
+

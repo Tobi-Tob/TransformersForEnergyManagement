@@ -116,18 +116,18 @@ def get_obs_normalization():
         [270.519361, 305.957043],  # direct_solar_irradiance
         [269.853461, 308.525444],  # direct_solar_irradiance_predicted_6h
         [0.45429827, 0.04875349],  # carbon_intensity
-        [34.1117344, 2.52848845],  # indoor_dry_bulb_temperature
-        [0.78337993, 0.65056839],  # non_shiftable_load
-        [0.51800352, 0.40013224],  # solar_generation
-        [0.41650000, 0.13700000],  # dhw_storage_soc
-        [0.05700000, 0.02700000],  # electrical_storage_soc
-        [0.40900000, 0.94500000],  # net_electricity_consumption
-        [0.12700000, 0.26320000],  # cooling_demand
-        [0.14230580, 0.38867504],  # dhw_demand
+        [24.2984569, 2.00000000],  # indoor_dry_bulb_temperature
+        [0.00000000, 1.00000000],  # non_shiftable_load
+        [0.00000000, 1.00000000],  # solar_generation
+        [0.00000000, 1.00000000],  # dhw_storage_soc
+        [0.00000000, 1.00000000],  # electrical_storage_soc
+        [0.00000000, 1.00000000],  # net_electricity_consumption
+        [0.00000000, 1.00000000],  # cooling_demand
+        [0.00000000, 1.00000000],  # dhw_demand
         [1.48240741, 0.93673277],  # occupant_count
-        [24.2984569, 1.01494655],  # indoor_dry_bulb_temperature_set_point
-        [0.02083333, 0.14282614],  # power_outage
-        [9.80000000, 2.47686531],  # temperature_difference
+        [24.2984569, 2.00000000],  # indoor_dry_bulb_temperature_set_point
+        [0.00000000, 1.00000000],  # power_outage
+        [0.00000000, 2.00000000],  # temperature_difference
     ])
 
 
@@ -162,7 +162,7 @@ class CityEnvForTraining(Env):
             if i == self.active_building_ID:
                 actions_of_all_buildings.append(action_of_active_building)
             else:
-                action_of_other_building, _ = self.agent.predict(observations_of_all_buildings[i])
+                action_of_other_building, _ = self.agent.predict(observations_of_all_buildings[i], deterministic=True)
                 actions_of_all_buildings.append(action_of_other_building)
 
         actions = modify_action(actions_of_all_buildings)
