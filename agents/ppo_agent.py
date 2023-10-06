@@ -12,13 +12,14 @@ class PPOAgent(Agent):
     def __init__(self, env: CityLearnEnv,  **kwargs: Any):
         super().__init__(env, **kwargs)
         model_id = 'PPO_1'
+        self.ensemble = True  # if True: mean prediction over all 3 models
+        self.model_index = 0   # else use model defined by model_index
         self.models = []
         for n in [1, 2, 3]:
             model_n = PPO.load("models/" + model_id + "/m" + str(n))
             # model_n = PPO.load("models/ppo3")
             model_n.policy.set_training_mode(False)
             self.models.append(model_n)
-        self.model_index = 0
         self.model_info = dict(
             model_id=model_id,
             num_timesteps=self.models[self.model_index].num_timesteps,
@@ -37,7 +38,14 @@ class PPOAgent(Agent):
         obs_modified = modify_obs(observations)
         actions = []
         for i in range(len(obs_modified)):
-            action_i, _ = self.models[self.model_index].predict(obs_modified[i], deterministic=True)
+            if self.ensemble:
+                action_m1, _ = self.models[0].predict(obs_modified[i], deterministic=True)
+                action_m2, _ = self.models[1].predict(obs_modified[i], deterministic=True)
+                action_m3, _ = self.models[2].predict(obs_modified[i], deterministic=True)
+                action_i = (np.array(action_m1) + np.array(action_m2) + np.array(action_m3))/3
+                action_i = action_i.tolist()
+            else:
+                action_i, _ = self.models[self.model_index].predict(obs_modified[i], deterministic=True)
             actions.append(action_i)
 
             self.all_observations.append(obs_modified[i])

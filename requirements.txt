@@ -4,5 +4,3 @@ stable_baselines3[extra]
 torch
 tensorboard
 shimmy
-cloudpickle==1.6.0
-pickle5==0.0.11

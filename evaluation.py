@@ -1,13 +1,12 @@
 import numpy as np
 import time
 import os
-
+import utils
 from citylearn.citylearn import CityLearnEnv
+from random import randint
 
 """
-This is only a reference script provided to allow you 
-to do local evaluation. The evaluator **DOES NOT** 
-use this script for orchestrating the evaluations. 
+This is an edited version of local_evaluation.py provided by the challenge. 
 """
 
 from agents.user_agent import SubmissionAgent
@@ -17,7 +16,7 @@ from rewards.user_reward import SubmissionReward
 class WrapperEnv:
     """
     Env to wrap provide Citylearn Env data without providing full env
-    Preventing attribute access outside of the available functions
+    Preventing attribute access outside the available functions
     """
 
     def __init__(self, env_data):
@@ -56,7 +55,7 @@ def create_citylearn_env(config, reward_function):
 
 def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> CityLearnEnv:
     """Update random seed used in generating power outage signals.
-
+    
     Used to optionally update random seed for stochastic power outage model in all buildings.
     Random seeds should be updated before calling :py:meth:`citylearn.citylearn.CityLearnEnv.reset`.
     """
@@ -74,6 +73,7 @@ def evaluate(config):
     print("Env Created")
 
     agent = SubmissionAgent(wrapper_env)
+    agent.set_model_index(2)
 
     observations = env.reset()
 
@@ -87,14 +87,17 @@ def evaluate(config):
     num_steps = 0
     interrupted = False
     episode_metrics = []
+    J = 0
+    action_sum = np.zeros(len(env.buildings) * 3)
     try:
         while True:
 
-            ### This is only a reference script provided to allow you
-            ### to do local evaluation. The evaluator **DOES NOT**
-            ### use this script for orchestrating the evaluations.
+            observations, reward, done, _ = env.step(actions)
 
-            observations, _, done, _ = env.step(actions)
+            J += reward[0]
+            action_sum += np.abs(np.array(actions[0]))
+            utils.print_interactions(actions, reward, observations)
+
             if not done:
                 step_start = time.perf_counter()
                 actions = agent.predict(observations)
@@ -103,11 +106,15 @@ def evaluate(config):
                 episodes_completed += 1
                 metrics_df = env.evaluate_citylearn_challenge()
                 episode_metrics.append(metrics_df)
-                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics_df}", )
+                print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} "
+                      f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=4)}")
+                print(f"Latest episode metrics: {metrics_df}")
+                J = 0
+                action_sum = np.zeros(len(env.buildings) * 3)
 
-                # Optional: Uncomment line below to update power outage random seed
+                # Optional: Uncomment line below to update power outage random seed 
                 # from what was initially defined in schema
-                env = update_power_outage_random_seed(env, 90000)
+                env = update_power_outage_random_seed(env, randint(0, 9999))
 
                 observations = env.reset()
 
@@ -129,16 +136,38 @@ def evaluate(config):
     if not interrupted:
         print("=========================Completed=========================")
 
-    print(f"Total time taken by agent: {agent_time_elapsed}s")
+    print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
+    utils.print_metrics(episode_metrics)
+
+    # agent.print_normalizations()
 
 
 if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1
+        num_episodes = 1  # TODO epidose 2+ hat keine Stromausfälle?
 
 
-    config = Config()
+    config_data = Config()
 
-    evaluate(config)
+    evaluate(config_data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
