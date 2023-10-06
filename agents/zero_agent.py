@@ -17,7 +17,5 @@ class ZeroAgent(Agent):
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
         """ Just a passthrough, can implement any custom logic as needed """
-        #  observation: (1x49)
-        #  action: (1x9)
         action = [[0] * self.action_dim]
         return action

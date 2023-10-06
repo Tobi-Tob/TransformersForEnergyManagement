@@ -1,3 +1,4 @@
+from random import randint
 from typing import List
 import numpy as np
 from numpy import ndarray
@@ -24,7 +25,7 @@ def modify_obs(obs: List[List[float]]) -> List[List[float]]:
     #  x   Include info of other buildings e.g. mean storage level or mean net energy consumption
     #  x   Use historic weather forecast information in observation
     #  x   Use building solar forecaster or building power forecaster (siehe Challenge 22 Platz 2, siehe Platz 3 SolarModul/DemandModul)
-    #  x   Normalize the observation
+    #  --> Normalize the observation
 
     obs = obs[0]
     del obs[21:25]  # remove electricity pricing and predictions 6h, 12h, 24h
@@ -150,6 +151,10 @@ class CityEnvForTraining(Env):
         self.active_building_ID += 1
         if self.active_building_ID >= self.num_buildings:
             self.active_building_ID = 0
+
+        random_seed = randint(0, 99999)
+        for b in self.city_env.buildings:
+            b.stochastic_power_outage_model.random_seed = random_seed
 
         obs = modify_obs(self.city_env.reset())
         return obs[self.active_building_ID]

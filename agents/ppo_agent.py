@@ -12,7 +12,7 @@ class PPOAgent(Agent):
     def __init__(self, env: CityLearnEnv,  **kwargs: Any):
         super().__init__(env, **kwargs)
         model_id = 'PPO_1'
-        self.ensemble = True  # if True: mean prediction over all 3 models
+        self.ensemble = False  # if True: mean prediction over all 3 models
         self.model_index = 0   # else use model defined by model_index
         self.models = []
         for n in [1, 2, 3]:
@@ -57,6 +57,11 @@ class PPOAgent(Agent):
             self.model_index = idx
         else:
             raise IndexError
+
+    def next_model_index(self):
+        self.model_index += 1
+        if self.model_index >= len(self.models):
+            self.model_index = 0
 
     def print_normalizations(self):
         print('mean:')

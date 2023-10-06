@@ -1,16 +1,16 @@
 import numpy as np
 import time
 import os
-import utils
-from citylearn.citylearn import CityLearnEnv
 from random import randint
 
+import utils
+from citylearn.citylearn import CityLearnEnv
+
+from agents.ppo_agent import PPOAgent
+from rewards.user_reward import SubmissionReward
 """
 This is an edited version of local_evaluation.py provided by the challenge. 
 """
-
-from agents.user_agent import SubmissionAgent
-from rewards.user_reward import SubmissionReward
 
 
 class WrapperEnv:
@@ -59,7 +59,6 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
     Used to optionally update random seed for stochastic power outage model in all buildings.
     Random seeds should be updated before calling :py:meth:`citylearn.citylearn.CityLearnEnv.reset`.
     """
-
     for b in env.buildings:
         b.stochastic_power_outage_model.random_seed = random_seed
 
@@ -72,9 +71,9 @@ def evaluate(config):
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
     print("Env Created")
 
-    agent = SubmissionAgent(wrapper_env)
-    agent.set_model_index(2)
+    agent = PPOAgent(wrapper_env)
 
+    env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
 
     agent_time_elapsed = 0
@@ -91,7 +90,6 @@ def evaluate(config):
     action_sum = np.zeros(len(env.buildings) * 3)
     try:
         while True:
-
             observations, reward, done, _ = env.step(actions)
 
             J += reward[0]
@@ -112,10 +110,8 @@ def evaluate(config):
                 J = 0
                 action_sum = np.zeros(len(env.buildings) * 3)
 
-                # Optional: Uncomment line below to update power outage random seed 
-                # from what was initially defined in schema
-                env = update_power_outage_random_seed(env, randint(0, 9999))
-
+                agent.next_model_index()
+                env = update_power_outage_random_seed(env, randint(0, 99999))
                 observations = env.reset()
 
                 step_start = time.perf_counter()
@@ -146,7 +142,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1  # TODO epidose 2+ hat keine Stromausfälle?
+        num_episodes = 3  # if num_episodes > 25 -> probability of at least one power outage in the episodes is >95%
 
 
     config_data = Config()

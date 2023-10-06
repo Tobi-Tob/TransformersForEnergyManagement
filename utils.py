@@ -49,7 +49,7 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    do_print = True
+    do_print = False
     if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
@@ -70,20 +70,34 @@ def print_interactions(action, reward, next_observation):
 def print_metrics(episode_metrics):
     if len(episode_metrics) > 0:
         # print all episode_metrics values
-        score = 0
+        score = 0  # own score (special computation for nan values)
         city_learn_score = 0
+        weight_correction = 0
         for metric in episode_metrics[0].keys():
             display_name = episode_metrics[0][metric]['display_name']
-            value = np.nanmean([e[metric]['value'] for e in episode_metrics])
+            values = [e[metric]['value'] for e in episode_metrics]
+            number_of_nan = sum(np.isnan(x) for x in values)
+            if metric == "power_outage_normalized_unserved_energy_total":
+                n_episodes_with_outage = len(values) - number_of_nan
+            if number_of_nan == len(values):
+                value = None
+            else:
+                value = np.nanmean(values)
             if metric == "average_score":
                 city_learn_score = value
             else:
                 weight = episode_metrics[0][metric]['weight']
-                print(f"{str(weight):<6} {display_name:<18} {np.round(value, decimals=4)}")
-                score += weight * value
+                if value is not None:
+                    print(f"{str(weight):<6} {display_name:<18} {np.round(value, decimals=4)}")
+                    score += weight * value
+                else:
+                    print(f"{str(weight):<6} {display_name:<18} None")
+                    weight_correction += weight
+        score = score / (1 - weight_correction)  # only has an effect if there was no power outage during the evaluation
         print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
         if not np.isclose(score, city_learn_score, atol=1e-6):
             print('\033[33m' + f"{'Score does not equal:':<25} {city_learn_score}")
+        print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
 
 def init_environment(buildings_to_use, simulation_start_end=None, **kwargs):
