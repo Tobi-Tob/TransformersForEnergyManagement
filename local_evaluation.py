@@ -75,7 +75,7 @@ def evaluate(config):
     print("Env Created")
 
     agent = SubmissionAgent(wrapper_env)
-    agent.set_model_index(0)
+    # agent.set_model_index(0)
 
     observations = env.reset()
 
