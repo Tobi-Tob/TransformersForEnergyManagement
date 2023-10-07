@@ -95,6 +95,7 @@ def evaluate(config):
             J += reward[0]
             action_sum += np.abs(np.array(actions[0]))
             utils.print_interactions(actions, reward, observations)
+            # TODO np.round(J, decimals=2) can be nan
 
             if not done:
                 step_start = time.perf_counter()
@@ -142,7 +143,12 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 3  # if num_episodes > 25 -> probability of at least one power outage in the episodes is >95%
+        num_episodes = 20
+
+        # Power outage probability:
+        # p(outage|day) = 0.393% (modified to 1.97%)
+        # p(outage>=1|month) = 11.15% (modified to 44.90%)
+        # To have at least one outage in the evaluation with 95% probability: episodes >= 26 (modified to >=6)
 
 
     config_data = Config()

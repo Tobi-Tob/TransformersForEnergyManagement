@@ -338,7 +338,7 @@
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
             "random_seed": 73055,
-            "saifi": 1.436,
+            "saifi": 7.18,
             "caidi": 331.2
           }
         }
@@ -548,7 +548,7 @@
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
             "random_seed": 73055,
-            "saifi": 1.436,
+            "saifi": 7.18,
             "caidi": 331.2
           }
         }
@@ -758,7 +758,7 @@
           "type": "citylearn.power_outage.ReliabilityMetricsPowerOutage",
           "attributes": {
             "random_seed": 73055,
-            "saifi": 1.436,
+            "saifi": 7.18,
             "caidi": 331.2
           }
         }
