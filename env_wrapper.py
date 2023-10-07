@@ -125,7 +125,7 @@ def get_obs_normalization():
         [0.00000000, 1.00000000],  # net_electricity_consumption
         [0.00000000, 1.00000000],  # cooling_demand
         [0.00000000, 1.00000000],  # dhw_demand
-        [1.48240741, 0.93673277],  # occupant_count
+        [0.00000000, 1.00000000],  # occupant_count
         [24.2984569, 2.00000000],  # indoor_dry_bulb_temperature_set_point
         [0.00000000, 1.00000000],  # power_outage
         [0.00000000, 2.00000000],  # temperature_difference
@@ -136,7 +136,7 @@ class CityEnvForTraining(Env):
     # EnvWrapper Class used for training, controlling one building interactions
     def __init__(self, env):
         self.city_env = env
-        self.agent = None
+        self.evaluation_model = None
 
         self.num_buildings = len(env.buildings)
         self.active_building_ID = 0
@@ -144,8 +144,11 @@ class CityEnvForTraining(Env):
         self.observation_space = get_modified_observation_space()
         self.time_steps = env.time_steps
 
-    def set_agent(self, agent):
-        self.agent = agent
+    def set_evaluation_model(self, model):
+        """
+        Evaluation model is used for generating actions for all buildings that are not actively included in the training process at the moment
+        """
+        self.evaluation_model = model
 
     def reset(self, **kwargs) -> List[float]:
         self.active_building_ID += 1
@@ -157,6 +160,12 @@ class CityEnvForTraining(Env):
             b.stochastic_power_outage_model.random_seed = random_seed
 
         obs = modify_obs(self.city_env.reset())
+
+        # if self.evaluation_model is not None:
+        #     test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881, 0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0, 0.19288472831249237, -0.555773913860321, 0.0, 0.16414415836334229, 0.5525509585834176, 0.04521620637206958, 0.0, 1.8179616928100586]
+        #     test_action, _ = self.evaluation_model.predict(test_obs, deterministic=True)
+        #     print(test_action)
+
         return obs[self.active_building_ID]
 
     def step(self, action_of_active_building: List[float]):
@@ -167,7 +176,7 @@ class CityEnvForTraining(Env):
             if i == self.active_building_ID:
                 actions_of_all_buildings.append(action_of_active_building)
             else:
-                action_of_other_building, _ = self.agent.predict(observations_of_all_buildings[i], deterministic=True)
+                action_of_other_building, _ = self.evaluation_model.predict(observations_of_all_buildings[i], deterministic=True)
                 actions_of_all_buildings.append(action_of_other_building)
 
         actions = modify_action(actions_of_all_buildings)

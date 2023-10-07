@@ -65,7 +65,7 @@ def init_ppo(env, learning_rate, log_dir):
                 tensorboard_log=log_dir,
                 verbose=2)
 
-    env.set_agent(agent)  # allow CityEnvForTraining access to the model
+    env.set_evaluation_model(agent)  # allow CityEnvForTraining access to the model
 
     return agent
 
