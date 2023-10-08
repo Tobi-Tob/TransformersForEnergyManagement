@@ -16,7 +16,7 @@ class PPOAgent(Agent):
         self.model_index = 0   # else use model defined by model_index
         self.models = []
         for n in [1, 2, 3]:
-            model_n = PPO.load("models/" + model_id + "/m" + str(n))
+            model_n = PPO.load("my_models/" + model_id + "/m" + str(n))
             # model_n = PPO.load("models/ppo3")
             model_n.policy.set_training_mode(False)
             self.models.append(model_n)

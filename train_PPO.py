@@ -19,7 +19,7 @@ def main():
     args = parser.parse_args()
     model_id = args.model_id
     model_id = "PPO_" + model_id
-    model_dir = f"models/{model_id}"
+    model_dir = f"my_models/{model_id}"
     log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
     # tensorboard_callback = tensorflow.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
     learning_rate = args.lr

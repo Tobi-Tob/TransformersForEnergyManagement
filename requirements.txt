@@ -4,3 +4,4 @@ stable_baselines3[extra]
 torch
 tensorboard
 shimmy
+tqdm
