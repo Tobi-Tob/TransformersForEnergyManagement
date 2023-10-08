@@ -12,12 +12,11 @@ class PPOAgent(Agent):
     def __init__(self, env: CityLearnEnv,  **kwargs: Any):
         super().__init__(env, **kwargs)
         model_id = 'PPO_1'
-        self.ensemble = False  # if True: mean prediction over all 3 models
+        self.is_ensemble = False  # if True: mean prediction over all 3 models
         self.model_index = 0   # else use model defined by model_index
         self.models = []
         for n in [1, 2, 3]:
             model_n = PPO.load("my_models/" + model_id + "/m" + str(n))
-            # model_n = PPO.load("models/ppo3")
             model_n.policy.set_training_mode(False)
             self.models.append(model_n)
         self.model_info = dict(
@@ -35,10 +34,10 @@ class PPOAgent(Agent):
         return self.predict(observations)
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
-        obs_modified = modify_obs(observations)
+        obs_modified = modify_obs(observations, self.building_metadata)
         actions = []
         for i in range(len(obs_modified)):
-            if self.ensemble:
+            if self.is_ensemble:
                 action_m1, _ = self.models[0].predict(obs_modified[i], deterministic=True)
                 action_m2, _ = self.models[1].predict(obs_modified[i], deterministic=True)
                 action_m3, _ = self.models[2].predict(obs_modified[i], deterministic=True)
@@ -50,7 +49,7 @@ class PPOAgent(Agent):
 
             self.all_observations.append(obs_modified[i])
 
-        return modify_action(actions)
+        return modify_action(actions, self.building_metadata)
 
     def set_model_index(self, idx):
         if idx < len(self.models):

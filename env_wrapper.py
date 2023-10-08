@@ -1,6 +1,7 @@
 from random import randint
 from typing import List
 import numpy as np
+from citylearn.citylearn import CityLearnEnv
 from numpy import ndarray
 from gym import Env, spaces
 
@@ -9,7 +10,7 @@ File to modify the observation and action space and wrap the citylearn environme
 '''
 
 
-def modify_obs(obs: List[List[float]]) -> List[List[float]]:
+def modify_obs(obs: List[List[float]], metadata) -> List[List[float]]:
     """
     Input: (1,52), Output: (3, 21)
     Modify the observation space to:
@@ -48,7 +49,7 @@ def modify_obs(obs: List[List[float]]) -> List[List[float]]:
         assert len(b) == 12
 
     obs_modified = []
-    normalizations = get_obs_normalization()
+    normalizations = get_obs_normalization(metadata)
     for i in range(len(obs_single_building)):
         obs = obs_district + obs_single_building[i]
         for j in range(len(obs)):
@@ -58,7 +59,7 @@ def modify_obs(obs: List[List[float]]) -> List[List[float]]:
     return obs_modified
 
 
-def modify_action(action: List[ndarray]) -> List[List[float]]:
+def modify_action(action: List[ndarray], metadata) -> List[List[float]]:
     """
     Input: (3,3), Output: (1, 9)
     """
@@ -105,7 +106,7 @@ def get_modified_action_space():
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
 
-def get_obs_normalization():
+def get_obs_normalization(metadata):
     return np.array([
         #  -mean-      -std-
         [4.09861111, 1.97132168],  # day_type
@@ -134,8 +135,9 @@ def get_obs_normalization():
 
 class CityEnvForTraining(Env):
     # EnvWrapper Class used for training, controlling one building interactions
-    def __init__(self, env):
-        self.city_env = env
+    def __init__(self, env: CityLearnEnv):
+        self.env = env
+        self.metadata = env.get_metadata()['buildings']
         self.evaluation_model = None
 
         self.num_buildings = len(env.buildings)
@@ -156,10 +158,10 @@ class CityEnvForTraining(Env):
             self.active_building_ID = 0
 
         random_seed = randint(0, 99999)
-        for b in self.city_env.buildings:
+        for b in self.env.buildings:
             b.stochastic_power_outage_model.random_seed = random_seed
 
-        obs = modify_obs(self.city_env.reset())
+        obs = modify_obs(self.env.reset(), self.metadata)
 
         # if self.evaluation_model is not None:
         #     test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881, 0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0, 0.19288472831249237, -0.555773913860321, 0.0, 0.16414415836334229, 0.5525509585834176, 0.04521620637206958, 0.0, 1.8179616928100586]
@@ -170,7 +172,7 @@ class CityEnvForTraining(Env):
 
     def step(self, action_of_active_building: List[float]):
         # only return visible state of the active building
-        observations_of_all_buildings = modify_obs(self.city_env.observations)
+        observations_of_all_buildings = modify_obs(self.env.observations, self.metadata)
         actions_of_all_buildings = []
         for i in range(self.num_buildings):
             if i == self.active_building_ID:
@@ -179,11 +181,11 @@ class CityEnvForTraining(Env):
                 action_of_other_building, _ = self.evaluation_model.predict(observations_of_all_buildings[i], deterministic=True)
                 actions_of_all_buildings.append(action_of_other_building)
 
-        actions = modify_action(actions_of_all_buildings)
+        actions = modify_action(actions_of_all_buildings, self.metadata)
 
-        next_obs, reward, done, info = self.city_env.step(actions)
+        next_obs, reward, done, info = self.env.step(actions)
 
-        return modify_obs(next_obs)[self.active_building_ID], sum(reward), done, info
+        return modify_obs(next_obs, self.metadata)[self.active_building_ID], sum(reward), done, info
 
     def render(self):
-        return self.city_env.render()
+        return self.env.render()
