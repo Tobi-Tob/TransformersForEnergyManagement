@@ -12,7 +12,7 @@ Custom agents need to be a subclass of the Citylearn environment's Agent class. 
   - Network architecture, size and depth
   - Different activation functions
   - Algorithm specific hyperparameters
-- Different feature representation
+- Different feature representation (solar generation and non-shift able load normalize with yearly estimate)
 - Artificially increase the rate of power outages to force the agent to learn this behavior, which is crucial to the challenge
 - Other RL algorithms like SAC
 - Data augmentation of buildings (linear combination or noise) for richer training

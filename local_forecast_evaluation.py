@@ -6,6 +6,8 @@ import json
 
 from citylearn.citylearn import CityLearnEnv
 
+from agents.forecaster import SolarGenerationForecaster
+
 """
 This is only a reference script provided to allow you 
 to do local evaluation. The evaluator **DOES NOT** 
@@ -80,6 +82,11 @@ def evaluate(config):
 
     forecast_quailty_scores = []
 
+    collect_data = False
+    SGF = SolarGenerationForecaster()
+    X = []
+    y = []
+
     try:
         observations = env.reset()
         for _ in tqdm(range(env.time_steps)):
@@ -87,6 +94,10 @@ def evaluate(config):
             ### This is only a reference script provided to allow you
             ### to do local evaluation. The evaluator **DOES NOT**
             ### use this script for orchestrating the evaluations.
+
+            if collect_data:
+                obs_modified = SGF.modify_obs(observations)
+                X.append(obs_modified)
 
             step_start = time.perf_counter()
             forecasts_dict = model.compute_forecast(observations)
@@ -118,7 +129,13 @@ def evaluate(config):
             # Step environment.
             # ========================================================================
             actions = np.zeros((1, len(env.buildings) * 3))
+
             observations, _, done, _ = env.step(actions)
+
+            if collect_data:
+                next_solar_generation = observations[0][17] / SGF.pv_nominal_power
+                y.append(next_solar_generation)
+
             if done:
                 break
 
@@ -168,6 +185,12 @@ def evaluate(config):
 
     print("=========================Forecast Quality Results=========================")
     print(json.dumps(results, indent=4))
+
+    if collect_data:
+        print(X)
+        print(y)
+        np.save("data/solar_forecast/X", np.array(X))
+        np.save("data/solar_forecast/y", np.array(y))
 
 
 if __name__ == '__main__':

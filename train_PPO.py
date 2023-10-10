@@ -32,7 +32,7 @@ def main():
         env = CityEnvForTraining(env)  # Environment only for training
         env.reset()
 
-        agent = init_ppo(env, learning_rate, log_dir)
+        agent = _init_ppo(env, learning_rate, log_dir)
         sub_id = 'm' + str(i)
         model_sub_id = model_id + '_' + sub_id
 
@@ -42,7 +42,7 @@ def main():
         agent.save(f"{model_dir}/{sub_id}")
 
 
-def init_ppo(env, learning_rate, log_dir):
+def _init_ppo(env, learning_rate, log_dir):
 
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy

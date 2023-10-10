@@ -5,3 +5,6 @@ torch
 tensorboard
 shimmy
 tqdm
+sklearn
+joblib
+matplotlib
