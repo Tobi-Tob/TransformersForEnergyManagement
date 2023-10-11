@@ -139,14 +139,14 @@ def evaluate(config):
     print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
     utils.print_metrics(episode_metrics)
 
-    agent.print_normalizations()
+    # agent.print_normalizations()
 
 
 if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1
+        num_episodes = 6
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

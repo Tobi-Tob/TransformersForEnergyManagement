@@ -46,8 +46,8 @@ def _init_ppo(env, learning_rate, log_dir):
 
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
-    pi_network = [64, 64]  # [250, 250]
-    v_network = [64, 64]  # [250, 250]
+    pi_network = [250, 250]  # [250, 250]
+    v_network = [250, 250]  # [250, 250]
     clip_range = 0.2
 
     policy_kwargs = dict(activation_fn=torch.nn.ReLU,  # LeakyReLU
@@ -58,7 +58,7 @@ def _init_ppo(env, learning_rate, log_dir):
                 env=env,
                 learning_rate=learning_rate,  # 0.0005
                 n_steps=1440,  # 2000, 10.000
-                batch_size=48,  # 200, 500
+                batch_size=72,  # 200, 500
                 gamma=1,
                 clip_range=clip_range,
                 use_sde=False,

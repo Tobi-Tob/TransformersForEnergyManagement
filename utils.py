@@ -60,9 +60,9 @@ def print_interactions(action, reward, next_observation):
             return data
 
         # print(get_act("electrical_storage_action"), "electrical_storage_action")
-        # print(reward, "reward")
+        print(reward, "reward")
         # print()
-        print(get_obs('net_electricity_consumption'))
+        # print(get_obs('net_electricity_consumption'))
 
 
 def print_metrics(episode_metrics):
