@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import time
 import os
@@ -131,19 +133,20 @@ def evaluate(config):
         interrupted = True
 
     if not interrupted:
-        print("=========================Completed=========================")
+        dt_string = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        print(f"================== Completed: {dt_string} ==================")
 
     print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
     utils.print_metrics(episode_metrics)
 
-    # agent.print_normalizations()
+    agent.print_normalizations()
 
 
 if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 3
+        num_episodes = 1
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

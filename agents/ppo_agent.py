@@ -77,6 +77,8 @@ class PPOAgent(Agent):
             self.model_index = 0
 
     def print_normalizations(self):
+        print('sum:')
+        print(np.sum(self.all_observations, axis=0))
         print('mean:')
         print(np.mean(self.all_observations, axis=0))
         print('std:')

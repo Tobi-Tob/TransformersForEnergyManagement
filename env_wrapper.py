@@ -63,10 +63,13 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
 
     obs_modified = []
     normalizations = get_obs_normalization(metadata)
-    for b in obs_single_building:
+    for i, b in enumerate(obs_single_building):
         obs = obs_district + b
-        for i in range(len(obs)):
-            obs[i] = (obs[i] - normalizations[i][0]) / normalizations[i][1]
+        for j in range(len(obs)):
+            if isinstance(normalizations[j][0], list):
+                obs[j] = (obs[j] - normalizations[j][0][i]) / normalizations[j][1][i]
+            else:
+                obs[j] = (obs[j] - normalizations[j][0]) / normalizations[j][1]
         assert len(obs) == 4 + 13
         obs_modified.append(obs)
 
@@ -117,26 +120,46 @@ def get_modified_action_space():
 
 
 def get_obs_normalization(metadata):
-    return np.array([
-        #  -mean-      -std-
+    cooling_demand_estimate = []
+    dhw_demand_estimate = []
+    non_shiftable_load_estimate = []
+    solar_generation_estimate = []
+    net_e_consumption_estimate = []
+    for bm in metadata:
+        cooling_demand = bm['annual_cooling_demand_estimate']/bm['simulation_time_steps']
+        cooling_demand_estimate.append(cooling_demand)
+        # [2400.07568359375, 1256.208740234375, 1516.25146484375]
+        dhw_demand = bm['annual_dhw_demand_estimate']/bm['simulation_time_steps']
+        dhw_demand_estimate.append(dhw_demand)
+        # [153.8460235595703, 45.04438781738281, 109.74966430664062]
+        non_shiftable_load = bm['annual_non_shiftable_load_estimate']/bm['simulation_time_steps']
+        non_shiftable_load_estimate.append(non_shiftable_load)
+        # [450.445068359375, 323.14483642578125, 631.7621459960938]
+        solar_generation = bm['annual_solar_generation_estimate']/bm['simulation_time_steps']
+        solar_generation_estimate.append(solar_generation)
+        # [345.7142639160156, 172.8571319580078, 345.7142639160156]
+        net_e_consumption_estimate.append(cooling_demand + dhw_demand + non_shiftable_load - solar_generation)
+
+    return [
+        #   -mean-      -std-
         [4.09861111, 1.97132168],  # day_type
         [12.4680556, 6.92211284],  # hour
-        [29.5859027, 4.78622061],  # outdoor_dry_bulb_temperature
+        [24.2984569, 4.00000000],  # outdoor_dry_bulb_temperature
         [0.45429827, 0.04875349],  # carbon_intensity
-        [24.2984569, 2.00000000],  # indoor_dry_bulb_temperature
-        [0.00000000, 1.00000000],  # non_shiftable_load
-        [0.00000000, 1.00000000],  # solar_generation
+        [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature
+        [non_shiftable_load_estimate, non_shiftable_load_estimate],  # non_shiftable_load (high max 19)
+        [solar_generation_estimate, solar_generation_estimate],      # solar_generation
         [0.00000000, 1.00000000],  # dhw_storage_soc
         [0.00000000, 1.00000000],  # electrical_storage_soc
-        [0.00000000, 1.00000000],  # net_electricity_consumption
-        [0.00000000, 1.00000000],  # cooling_demand
-        [0.00000000, 1.00000000],  # dhw_demand
+        [net_e_consumption_estimate, net_e_consumption_estimate],    # net_electricity_consumption
+        [cooling_demand_estimate, cooling_demand_estimate],          # cooling_demand
+        [dhw_demand_estimate, dhw_demand_estimate],                  # dhw_demand (high std 2.9 and max 52)
         [0.00000000, 1.00000000],  # occupant_count
-        [24.2984569, 2.00000000],  # indoor_dry_bulb_temperature_set_point
+        [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature_set_point
         [0.00000000, 1.00000000],  # power_outage
-        [0.00000000, 2.00000000],  # temperature_difference
-        [0.00000000, 1.00000000],  # solar_generation_1h_predicted
-    ])
+        [0.00000000, 4.00000000],  # temperature_difference_to_set_point
+        [solar_generation_estimate, solar_generation_estimate],      # solar_generation_1h_predicted
+    ]
 
 
 class CityEnvForTraining(Env):

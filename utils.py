@@ -62,14 +62,13 @@ def print_interactions(action, reward, next_observation):
         # print(get_act("electrical_storage_action"), "electrical_storage_action")
         # print(reward, "reward")
         # print()
-        print("solar_generation", get_obs('solar_generation'))
+        print(get_obs('net_electricity_consumption'))
 
 
 def print_metrics(episode_metrics):
     if len(episode_metrics) > 0:
         # print all episode_metrics values
         score = 0  # own score (special computation for nan values)
-        city_learn_score = 0
         weight_correction = 0
         for metric in episode_metrics[0].keys():
             display_name = episode_metrics[0][metric]['display_name']
@@ -81,9 +80,7 @@ def print_metrics(episode_metrics):
                 value = None
             else:
                 value = np.nanmean(values)
-            if metric == "average_score":
-                city_learn_score = value
-            else:
+            if metric is not "average_score":
                 weight = episode_metrics[0][metric]['weight']
                 if value is not None:
                     print(f"{str(weight):<6} {display_name:<18} {np.round(value, decimals=4)}")
@@ -93,8 +90,6 @@ def print_metrics(episode_metrics):
                     weight_correction += weight
         score = score / (1 - weight_correction)  # only has an effect if there was no power outage during the evaluation
         print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
-        if not np.isclose(score, city_learn_score, atol=1e-6):
-            print('\033[33m' + f"{'Score does not equal:':<25} {city_learn_score}")
         print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
 
