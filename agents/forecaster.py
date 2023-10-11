@@ -17,9 +17,12 @@ class SolarGenerationForecaster:
         self.scaler = load('my_models/Forecaster/solar_obs_scaler.bin')
         self.input_dim = 7
         self.epsilon_clip = 8e-3  # clip predictions smaller than epsilon to 0
-        self.pv_nominal_power = 2.4  # value of building 1 which was used for training
+        self._pv_nominal_power = 2.4  # value of building 1 which was used for training
         self._diffuse_solar_irradiance_predictions = np.full(6, np.nan)
         self._direct_solar_irradiance_predictions = np.full(6, np.nan)
+
+    def get_diffuse_solar_irradiance(self):
+        return self._diffuse_solar_irradiance_predictions
 
     def reset(self):
         self._diffuse_solar_irradiance_predictions = np.full(6, np.nan)
@@ -57,7 +60,7 @@ class SolarGenerationForecaster:
         diffuse_solar_6h = obs[7]
         direct_solar = obs[10]
         direct_solar_6h = obs[11]
-        building_solar_generation = obs[17] / self.pv_nominal_power
+        building_solar_generation = obs[17] / self._pv_nominal_power
 
         # update prediction history
         self._diffuse_solar_irradiance_predictions[0:5] = self._diffuse_solar_irradiance_predictions[1:6]

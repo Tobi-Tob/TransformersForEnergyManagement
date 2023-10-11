@@ -73,6 +73,6 @@ def _init_ppo(env, learning_rate, log_dir):
 if __name__ == '__main__':
     main()
 
-# TODO print value net output while training
+# TODO checking training: print value net output while training
 # python train_PPO.py --model_id 1 --lr 3e-3 --steps 20000
 

@@ -116,7 +116,7 @@ def evaluate(config):
                 observations = env.reset()
 
                 step_start = time.perf_counter()
-                actions = agent.predict(observations)
+                actions = agent.register_reset(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
