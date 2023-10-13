@@ -59,10 +59,10 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        # print(get_act("electrical_storage_action"), "electrical_storage_action")
+        print(get_act("cooling_device_action"), "cooling_device_action")
         print(reward, "reward")
-        # print()
-        # print(get_obs('net_electricity_consumption'))
+        print()
+        print(get_obs('indoor_dry_bulb_temperature'), get_obs('indoor_dry_bulb_temperature_set_point'))
 
 
 def print_metrics(episode_metrics):

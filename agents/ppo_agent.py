@@ -32,12 +32,12 @@ class PPOAgent(Agent):
 
         self.model_info = dict(
             model_id=model_id,
+            ensemble=self.is_ensemble,
             forecasters=names,
             num_timesteps=self.models[self.model_index].num_timesteps,
             learning_rate=self.models[self.model_index].learning_rate,
         )
-        print(self.model_info)
-        # print(self.model.policy)
+        # print(self.models[self.model_index].policy)
         self.all_observations = []
 
     def register_reset(self, observations):

@@ -9,6 +9,7 @@ import utils
 from citylearn.citylearn import CityLearnEnv
 
 from agents.ppo_agent import PPOAgent
+from agents.zero_agent import ZeroAgent
 from rewards.user_reward import SubmissionReward
 """
 This is an edited version of local_evaluation.py provided by the challenge. 
@@ -68,18 +69,20 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
 
 
 def evaluate(config):
-    print("Starting local evaluation")
+    print("========================= Starting Evaluation =========================")
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
-    print("Env Created")
 
     agent = PPOAgent(wrapper_env)
+    # agent = ZeroAgent(wrapper_env)
+
+    agent.set_model_index(0)
+    switch_models = False
 
     env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
 
     agent_time_elapsed = 0
-
     step_start = time.perf_counter()
     actions = agent.register_reset(observations)
     agent_time_elapsed += time.perf_counter() - step_start
@@ -113,7 +116,8 @@ def evaluate(config):
                 J = 0
                 action_sum = np.zeros(len(env.buildings) * 3)
 
-                agent.next_model_index()
+                if switch_models:
+                    agent.next_model_index()
                 env = update_power_outage_random_seed(env, randint(0, 99999))
                 observations = env.reset()
 
@@ -134,8 +138,9 @@ def evaluate(config):
 
     if not interrupted:
         dt_string = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-        print(f"================== Completed: {dt_string} ==================")
+        print(f"======================= Completed: {dt_string} =======================")
 
+    print(agent.model_info, SubmissionReward.__name__)
     print(f"Total agent time: {np.round(agent_time_elapsed, decimals=2)}s")
     utils.print_metrics(episode_metrics)
 

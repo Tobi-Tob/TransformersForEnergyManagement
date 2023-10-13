@@ -1,8 +1,8 @@
 {
-  "challenge_id": "forecasting-track-citylearn-challenge",
+  "challenge_id": "control-track-citylearn-challenge",
   "authors": [
     "TobiTob"
   ],
-  "description": "changed example predictor"
+  "description": "PPO Agent"
 }
 

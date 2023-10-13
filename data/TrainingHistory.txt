@@ -1,0 +1,13 @@
+================== Completed: 13.10.2023 15:51:13 ==================
+{'model_id': 'PPO_1', 'ensemble': False, 'forecasters': ['SolarGenerationForecaster'], 'num_timesteps': 50400, 'learning_rate': 0.003} TempDiffReward
+Total agent time: 8.63s
+0.1    Carbon emissions   0.8732
+0.3    Unmet hours        0.6596
+0.075  Ramping            1.1588
+0.075  Load factor        1.0732
+0.075  Daily peak         0.9501
+0.075  All-time peak      0.9047
+0.15   Thermal resilience 0.8857
+0.15   Unserved energy    0.4938
+====>  Score:             0.7986262733283488
+Number of episodes with power outage: 3 / 6
