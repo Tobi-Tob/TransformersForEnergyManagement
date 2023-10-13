@@ -4,9 +4,10 @@ from citylearn.utilities import read_json
 from rewards.user_reward import SubmissionReward
 
 act_mapping = {
-    "dhw_storage_action": [0, 3, 6],  # action to control the hot water storage tank
-    "electrical_storage_action": [1, 4, 7],  # action to control the electrical storage
-    "cooling_device_action": [2, 5, 8]  # action to control the heat pump
+    "dhw_storage_action": [0, 3, 6],  # Action to control the hot water storage tank. Fraction of `dhw_storage` `capacity` to charge/discharge by.
+    "electrical_storage_action": [1, 4, 7],  # Action to control the electrical storage. Fraction of `electrical_storage` `capacity`.
+    "cooling_device_action": [2, 5, 8]  # Action to control the heat pump,
+    # fraction of `cooling_device` `nominal_power` to make available for space cooling.
 }
 
 obs_mapping = {

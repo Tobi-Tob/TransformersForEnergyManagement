@@ -22,7 +22,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
     'indoor_dry_bulb_temperature_set_point', 'power_outage', 'indoor_temperature_difference'],...]
     """
     #  --> Delete unimportant observations like pricing, 12 and 24 h predictions
-    #  --> Add usefully observation e.g. temperature_diff
+    #  --> Add usefully observation e.g. temperature_diff TODO next step temperature_1h?
     #  x   Include building specific info e.g. battery storage limit (or pre-process observation with this information)
     #  x   Include info of other buildings e.g. mean storage level or mean net energy consumption
     #  --> Use historic weather forecast information
@@ -78,8 +78,22 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
 
 def modify_action(action: List[ndarray], metadata) -> List[List[float]]:
     """
-    Input: (3,3), Output: (1, 9) TODO normalize with nominal cooling power e.g.
+    Input: (3,3), Output: (1, 9), values are modified with corresponding building specific constants.
     """
+    cooling_nominal_powers = []
+    dhw_storage_capacity = []
+    electrical_storage_capacity = []
+
+    for building_metadata in metadata:
+        cooling_nominal_powers.append(building_metadata['cooling_device']['nominal_power'])
+        dhw_storage_capacity.append(building_metadata['dhw_storage']['capacity'])
+        electrical_storage_capacity.append(building_metadata['electrical_storage']['capacity'])
+
+    for i in range(len(metadata)):
+        action[i][0] = action[i][0] / cooling_nominal_powers[i]
+        action[i][1] = action[i][1] / dhw_storage_capacity[i]
+        action[i][2] = action[i][2] / electrical_storage_capacity[i]
+
     return [np.concatenate(action).tolist()]
 
 
@@ -87,22 +101,22 @@ def get_modified_observation_space():
     observation_dim = 16
     low_limit = np.zeros(observation_dim)
     high_limit = np.zeros(observation_dim)
-    low_limit[0], high_limit[0] = 1, 7  # day_type
-    low_limit[1], high_limit[1] = 1, 24  # hour
-    low_limit[2], high_limit[2] = 21.37, 40.32  # outdoor_dry_bulb_temperature
-    low_limit[3], high_limit[3] = 0.3375, 0.5561  # carbon_intensity
-    low_limit[4], high_limit[4] = 9.99, 37.23  # indoor_dry_bulb_temperature
-    low_limit[5], high_limit[5] = 0.1686, 8.8252  # non_shiftable_load
-    low_limit[6], high_limit[6] = 0, 703.63  # solar_generation_1h_predicted
+    low_limit[0], high_limit[0] = -1.58, 1.48  # day_type
+    low_limit[1], high_limit[1] = -1.66, 1.67  # hour
+    low_limit[2], high_limit[2] = -0.73, 4.01  # outdoor_dry_bulb_temperature
+    low_limit[3], high_limit[3] = -2.40, 2.09  # carbon_intensity
+    low_limit[4], high_limit[4] = -5, 5  # indoor_dry_bulb_temperature
+    low_limit[5], high_limit[5] = -1, 20  # non_shiftable_load
+    low_limit[6], high_limit[6] = -1, 3  # solar_generation_1h_predicted
     low_limit[7], high_limit[7] = 0, 1  # dhw_storage_soc
     low_limit[8], high_limit[8] = 0, 1  # electrical_storage_soc
-    low_limit[9], high_limit[9] = -706.45, 19.75  # net_electricity_consumption
-    low_limit[10], high_limit[10] = 0, 12.1999  # cooling_demand
-    low_limit[11], high_limit[11] = 0, 6.5373  # dhw_demand
+    low_limit[9], high_limit[9] = -5, 10  # net_electricity_consumption
+    low_limit[10], high_limit[10] = -1, 100  # cooling_demand
+    low_limit[11], high_limit[11] = -1, 100  # dhw_demand
     low_limit[12], high_limit[12] = 0, 3  # occupant_count
-    low_limit[13], high_limit[13] = 20, 27.23  # indoor_dry_bulb_temperature_set_point
+    low_limit[13], high_limit[13] = -1.08, 0.74  # indoor_dry_bulb_temperature_set_point
     low_limit[14], high_limit[14] = 0, 1  # power_outage
-    low_limit[15], high_limit[15] = -17.23, 17.23  # temperature_difference
+    low_limit[15], high_limit[15] = -5, 5  # temperature_difference
 
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
@@ -111,9 +125,9 @@ def get_modified_action_space():
     action_dim = 3
     low_limit = np.zeros(action_dim)
     high_limit = np.zeros(action_dim)
-    low_limit[0], high_limit[0] = -1, 1  # dhw_storage_action
-    low_limit[1], high_limit[1] = -0.83, 0.83  # electrical_storage_action
-    low_limit[2], high_limit[2] = 0, 1  # cooling_device_action TODO
+    low_limit[0], high_limit[0] = -2.85, 2.85  # dhw_storage_action (max of all buildings)
+    low_limit[1], high_limit[1] = -4, 4  # electrical_storage_action (max of all buildings)
+    low_limit[2], high_limit[2] = 0, 4.11  # cooling_device_action (max of all buildings)
 
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
@@ -148,7 +162,7 @@ def get_obs_normalization(metadata):
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature
         [non_shiftable_load_estimate, non_shiftable_load_estimate],  # non_shiftable_load (high max 19)
         [solar_generation_estimate, solar_generation_estimate],      # solar_generation_1h_predicted
-        [0.00000000, 1.00000000],  # dhw_storage_soc
+        [0.00000000, 1.00000000],  # dhw_storage_soc  TODO: normalisieren * capacity dafür zusatz feature batterie stand 0-1 hinzufuegen
         [0.00000000, 1.00000000],  # electrical_storage_soc
         [net_e_consumption_estimate, net_e_consumption_estimate],    # net_electricity_consumption
         [cooling_demand_estimate, cooling_demand_estimate],          # cooling_demand
