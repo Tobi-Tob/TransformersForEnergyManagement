@@ -1,40 +1,31 @@
-import argparse
 import datetime
-
-# import tensorflow
 import torch
 from citylearn.citylearn import CityLearnEnv
 from rewards.user_reward import SubmissionReward
 from env_wrapper import CityEnvForTraining
 from stable_baselines3 import PPO
-from utils import init_environment
+from utils import init_environment, CustomCallback
 
 
-def main():
+def train():
+    # Model name
+    model_id = 1
+    model_id = "PPO_" + str(model_id)
+    model_dir = f"my_models/{model_id}"
+    log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
     total_timesteps = 10000
-    learning_rate = 3e-3  # 3e-3, 5e-4
+    save_interval = 1440
+    learning_rate = 3e-3  # 3e-3, 5e-4 later lower lr
     pi_network = [250, 250]  # [250, 250]
     v_network = [250, 250]  # [250, 250]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    n_steps = 720  # 720, 2000, 10.000
+    n_steps = 72  # 720, 2000, 10.000  TODO no mean(reward)?
     batch_size = 72  # 72, 200, 500
     clip_range = 0.2
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_id", type=str)
-    # parser.add_argument("--lr", type=float, default=3e-3)
-    # parser.add_argument("--steps", type=float, default=10000)
-
-    args = parser.parse_args()
-    model_id = args.model_id
-    model_id = "PPO_" + model_id
-    model_dir = f"my_models/{model_id}"
-    log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
-    # tensorboard_callback = tensorflow.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-    # learning_rate = args.lr
-    # training_steps = args.steps
+    custom_callback = CustomCallback()
 
     for i in [1, 2, 3]:
         # Initialize the training environment
@@ -61,14 +52,17 @@ def main():
         model_sub_id = model_id + '_' + sub_id
 
         # Train the agent
-        agent.learn(total_timesteps=total_timesteps, callback=None, log_interval=1,
-                    tb_log_name=model_sub_id, reset_num_timesteps=True, progress_bar=True)
+        for interval in range(1, int(total_timesteps/save_interval)):
+            agent.learn(total_timesteps=save_interval, callback=custom_callback, log_interval=1,
+                        tb_log_name=model_sub_id, reset_num_timesteps=False, progress_bar=True)
+            agent.save(f"{model_dir}/{sub_id}_{save_interval*interval}")
 
-        agent.save(f"{model_dir}/{sub_id}")
+        # agent.save(f"{model_dir}/{sub_id}")
 
 
 if __name__ == '__main__':
-    main()
+    train()
 
 # TODO checking training: print value net output while training
 # python train_PPO.py --model_id 1 --lr 3e-3 --steps 20000
+# tensorboard --logdir=logs

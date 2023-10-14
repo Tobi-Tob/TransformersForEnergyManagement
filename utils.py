@@ -1,6 +1,8 @@
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from citylearn.utilities import read_json
+from stable_baselines3.common.callbacks import BaseCallback
+
 from rewards.user_reward import SubmissionReward
 
 act_mapping = {
@@ -124,3 +126,81 @@ def init_environment(buildings_to_use, simulation_start_end=None, **kwargs) -> C
 
     env = CityLearnEnv(schema, reward_function=SubmissionReward)
     return env
+
+
+class CustomCallback(BaseCallback):
+    """
+    A custom callback that derives from ``BaseCallback``.
+    TODO maybe use EvalCallback
+
+    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
+    """
+
+    def __init__(self, verbose=0):
+        super(CustomCallback, self).__init__(verbose)
+        # Those variables will be accessible in the callback
+        # (they are defined in the base class)
+        # The RL model
+        # self.model = None  # type: BaseAlgorithm
+        # An alias for self.model.get_env(), the environment used for training
+        # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
+        # Number of time the callback was called
+        # self.n_calls = 0  # type: int
+        # self.num_timesteps = 0  # type: int
+        # local and global variables
+        # self.locals = None  # type: Dict[str, Any]
+        # self.globals = None  # type: Dict[str, Any]
+        # The logger object, used to report things in the terminal
+        # self.logger = None  # stable_baselines3.common.logger
+        # # Sometimes, for event callback, it is useful
+        # # to have access to the parent object
+        # self.parent = None  # type: Optional[BaseCallback]
+
+    def _on_training_start(self) -> None:
+        """
+        This method is called before the first rollout starts.
+        """
+        pass
+
+    def _on_rollout_start(self) -> None:
+        """
+        A rollout is the collection of environment interaction
+        using the current policy.
+        This event is triggered before collecting new samples.
+        """
+        pass
+
+    def _on_step(self) -> bool:
+        """
+        This method will be called by the model after each call to `env.step()`.
+
+        For child callback (of an `EventCallback`), this will be called
+        when the event is triggered.
+
+        :return: (bool) If the callback returns False, training is aborted early.
+
+        obs1 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, -0.29995125350341834, -0.42962120149552335, -1.0,
+                0.0, 0.20000000298023224, -0.8164203192745284, -0.6642459056555935, -0.7394076716902375, 3.0, -0.2690588813720707, 0.0,
+                -0.030892372131347656]
+        obs2 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, -0.0049859863220218514, -0.5826031280309119, -1.0,
+                0.0, 0.20000000298023224, -0.9070782985257365, -1.0, -1.0, 1.0, 0.03649693909301721, 0.0, -0.04148292541503906]
+        obs3 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, 0.033276380926513305, -0.5189677751741388, -1.0,
+                0.0, 0.20000000298023224, -0.7879400478671584, -0.7350756349894276, -1.0, 2.0, 0.03649693909301721, 0.0, -0.0032205581665039062]
+        get initial obs not hard coded
+        """
+        value_at_initial_state = np.random.random()  # self.model.policy.predict_values()
+        self.logger.record("train/value_at_initial_state", value_at_initial_state)
+
+        return True
+
+    def _on_rollout_end(self) -> None:
+        """
+        This event is triggered before updating the policy.
+        """
+        pass
+
+    def _on_training_end(self) -> None:
+        """
+        This event is triggered before exiting the `learn()` method.
+        """
+        pass

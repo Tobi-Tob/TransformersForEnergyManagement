@@ -77,7 +77,7 @@ def evaluate(config):
     # agent = ZeroAgent(wrapper_env)
 
     agent.set_model_index(0)
-    switch_models = False
+    switch_models = True
 
     env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
@@ -151,7 +151,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1
+        num_episodes = 9
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

@@ -13,7 +13,7 @@ class PPOAgent(Agent):
 
     def __init__(self, env: CityLearnEnv, **kwargs: Any):
         super().__init__(env, **kwargs)
-        model_id = 'PPO_1'
+        model_id = 'PPO_2'
         self.is_ensemble = False  # if True: mean prediction over all 3 models
         self.model_index = 0  # else use model defined by model_index
         self.models = []
