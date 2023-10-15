@@ -75,8 +75,7 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    # model = PPO.load("my_models/PPO_1/m1.zip")
-    agent = PPOAgent(wrapper_env, mode='switch')
+    agent = PPOAgent(wrapper_env)
     # agent = ZeroAgent(wrapper_env)
 
     agent.set_model_index(0)
@@ -154,7 +153,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 1
+        num_episodes = 9
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

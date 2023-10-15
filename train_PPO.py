@@ -9,7 +9,7 @@ from utils import init_environment, CustomCallback
 
 def train():
     # Model name
-    model_id = 3
+    model_id = 1
     model_id = "PPO_" + str(model_id)
     model_dir = f"my_models/{model_id}"
     log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
@@ -20,13 +20,13 @@ def train():
     pi_network = [250, 250]  # [250, 250]
     v_network = [250, 250]  # [250, 250]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    batch_size = 72  # 72, 200, 500
+    batch_size = 360  # 72, 200, 500
     clip_range = 0.2
 
-    total_timesteps = 10000  # total timesteps to run in the environment
+    total_timesteps = 1_000_000  # total timesteps to run in the environment
     n_steps = 720  # 720, 2000, 10.000 number of steps to run per update
-    eval_interval = 720  # doing a validation run in the complete env
-    save_interval = 1440  # save model every n timesteps
+    eval_interval = 1440  # doing a validation run in the complete env
+    save_interval = 3600  # save model every n timesteps
 
     for i in [1]:
         # Initialize the training environment

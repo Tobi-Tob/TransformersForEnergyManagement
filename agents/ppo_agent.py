@@ -13,7 +13,7 @@ from env_wrapper import modify_obs, modify_action
 
 class PPOAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, mode='switch', single_model=None, save_observations=False, **kwargs: Any):
+    def __init__(self, env: CityLearnEnv, mode='submission', single_model=None, save_observations=False, **kwargs: Any):
         super().__init__(env, **kwargs)
         self.mode = mode
         self.save_observations = save_observations
@@ -32,7 +32,10 @@ class PPOAgent(Agent):
             self.models.append(single_model)
             self.models[0].policy.set_training_mode(False)
         else:
-            raise TypeError('Not a valide mode')
+            model = PPO.load("my_models/PPO/PP0_3_m1_28800.zip")
+            model_id = type(model).__name__
+            self.models.append(model)
+            self.models[0].policy.set_training_mode(False)
 
         SGF = SolarGenerationForecaster()
         self.forecaster = {
