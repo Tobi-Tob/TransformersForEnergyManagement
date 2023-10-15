@@ -11,16 +11,26 @@ from env_wrapper import modify_obs, modify_action
 
 class PPOAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, **kwargs: Any):
+    def __init__(self, env: CityLearnEnv, mode='switch', single_model=None, save_observations=False, **kwargs: Any):
         super().__init__(env, **kwargs)
-        model_id = 'PPO_2'
-        self.is_ensemble = False  # if True: mean prediction over all 3 models
-        self.model_index = 0  # else use model defined by model_index
+        self.mode = mode
+        self.save_observations = save_observations
         self.models = []
-        for n in [1, 2, 3]:
-            model_n = PPO.load("my_models/" + model_id + "/m" + str(n))
-            model_n.policy.set_training_mode(False)
-            self.models.append(model_n)
+        if mode in ['switch', 'ensemble']:
+            model_id = 'PPO_2'
+            self.model_index = 0
+            for n in [1, 2, 3]:
+                model_n = PPO.load("my_models/" + model_id + "/m" + str(n))
+                model_n.policy.set_training_mode(False)
+                self.models.append(model_n)
+        elif mode in ['single']:
+            if single_model is None:
+                raise TypeError('A model has to be given by single_model, but is None')
+            model_id = type(single_model).__name__
+            self.models.append(single_model)
+            self.models[0].policy.set_training_mode(False)
+        else:
+            raise TypeError('Not a valide mode')
 
         SGF = SolarGenerationForecaster()
         self.forecaster = {
@@ -32,58 +42,67 @@ class PPOAgent(Agent):
 
         self.model_info = dict(
             model_id=model_id,
-            ensemble=self.is_ensemble,
+            mode=self.mode,
             forecasters=names,
-            num_timesteps=self.models[self.model_index].num_timesteps,
-            learning_rate=self.models[self.model_index].learning_rate,
+            num_timesteps=self.models[0].num_timesteps,
+            learning_rate=self.models[0].learning_rate,
         )
+        if self.save_observations:
+            self.all_observations = []
         # print(self.models[self.model_index].policy)
-        self.all_observations = []
 
     def register_reset(self, observations):
         """ Register reset needs the first set of actions after reset """
         self.reset()
         for forecaster in self.forecaster.values():
             forecaster.reset()
+
         return self.predict(observations)
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
         obs_modified = modify_obs(observations, self.forecaster, self.building_metadata)
         actions = []
         for i in range(len(obs_modified)):
-            if self.is_ensemble:
+            if self.mode is 'ensemble':
                 action_m1, _ = self.models[0].predict(obs_modified[i], deterministic=True)
                 action_m2, _ = self.models[1].predict(obs_modified[i], deterministic=True)
                 action_m3, _ = self.models[2].predict(obs_modified[i], deterministic=True)
                 action_i = (np.array(action_m1) + np.array(action_m2) + np.array(action_m3)) / 3
                 action_i = action_i.tolist()
-            else:
+            elif self.mode is 'switch':
                 action_i, _ = self.models[self.model_index].predict(obs_modified[i], deterministic=True)
+            else:
+                action_i, _ = self.models[0].predict(obs_modified[i], deterministic=True)
+
             actions.append(action_i)
 
-            self.all_observations.append(obs_modified[i])
+            if self.save_observations:
+                self.all_observations.append(obs_modified[i])
 
         return modify_action(actions, self.building_metadata)
 
     def set_model_index(self, idx):
-        if idx < len(self.models):
-            self.model_index = idx
-        else:
-            raise IndexError
+        if self.mode is 'switch' or 'ensemble':
+            if idx < len(self.models):
+                self.model_index = idx
+            else:
+                raise IndexError
 
     def next_model_index(self):
-        self.model_index += 1
-        if self.model_index >= len(self.models):
-            self.model_index = 0
+        if self.mode is 'switch' or 'ensemble':
+            self.model_index += 1
+            if self.model_index >= len(self.models):
+                self.model_index = 0
 
     def print_normalizations(self):
-        print('sum:')
-        print(np.sum(self.all_observations, axis=0))
-        print('mean:')
-        print(np.mean(self.all_observations, axis=0))
-        print('std:')
-        print(np.std(self.all_observations, axis=0))
-        print('max:')
-        print(np.max(self.all_observations, axis=0))
-        print('min:')
-        print(np.min(self.all_observations, axis=0))
+        if self.save_observations:
+            print('sum:')
+            print(np.sum(self.all_observations, axis=0))
+            print('mean:')
+            print(np.mean(self.all_observations, axis=0))
+            print('std:')
+            print(np.std(self.all_observations, axis=0))
+            print('max:')
+            print(np.max(self.all_observations, axis=0))
+            print('min:')
+            print(np.min(self.all_observations, axis=0))

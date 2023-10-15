@@ -139,16 +139,16 @@ def get_obs_normalization(metadata):
     solar_generation_estimate = []
     net_e_consumption_estimate = []
     for bm in metadata:
-        cooling_demand = bm['annual_cooling_demand_estimate']/bm['simulation_time_steps']
+        cooling_demand = bm['annual_cooling_demand_estimate'] / bm['simulation_time_steps']
         cooling_demand_estimate.append(cooling_demand)
         # [2400.07568359375, 1256.208740234375, 1516.25146484375]
-        dhw_demand = bm['annual_dhw_demand_estimate']/bm['simulation_time_steps']
+        dhw_demand = bm['annual_dhw_demand_estimate'] / bm['simulation_time_steps']
         dhw_demand_estimate.append(dhw_demand)
         # [153.8460235595703, 45.04438781738281, 109.74966430664062]
-        non_shiftable_load = bm['annual_non_shiftable_load_estimate']/bm['simulation_time_steps']
+        non_shiftable_load = bm['annual_non_shiftable_load_estimate'] / bm['simulation_time_steps']
         non_shiftable_load_estimate.append(non_shiftable_load)
         # [450.445068359375, 323.14483642578125, 631.7621459960938]
-        solar_generation = bm['annual_solar_generation_estimate']/bm['simulation_time_steps']
+        solar_generation = bm['annual_solar_generation_estimate'] / bm['simulation_time_steps']
         solar_generation_estimate.append(solar_generation)
         # [345.7142639160156, 172.8571319580078, 345.7142639160156]
         net_e_consumption_estimate.append(cooling_demand + dhw_demand + non_shiftable_load - solar_generation)
@@ -161,12 +161,12 @@ def get_obs_normalization(metadata):
         [0.45429827, 0.04875349],  # carbon_intensity
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature
         [non_shiftable_load_estimate, non_shiftable_load_estimate],  # non_shiftable_load (high max 19)
-        [solar_generation_estimate, solar_generation_estimate],      # solar_generation_1h_predicted
+        [solar_generation_estimate, solar_generation_estimate],  # solar_generation_1h_predicted
         [0.00000000, 1.00000000],  # dhw_storage_soc  TODO: normalisieren * capacity dafür zusatz feature batterie stand 0-1 hinzufuegen
         [0.00000000, 1.00000000],  # electrical_storage_soc
-        [net_e_consumption_estimate, net_e_consumption_estimate],    # net_electricity_consumption
-        [cooling_demand_estimate, cooling_demand_estimate],          # cooling_demand
-        [dhw_demand_estimate, dhw_demand_estimate],                  # dhw_demand (high std 2.9 and max 52)
+        [net_e_consumption_estimate, net_e_consumption_estimate],  # net_electricity_consumption
+        [cooling_demand_estimate, cooling_demand_estimate],  # cooling_demand
+        [dhw_demand_estimate, dhw_demand_estimate],  # dhw_demand (high std 2.9 and max 52)
         [0.00000000, 1.00000000],  # occupant_count
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature_set_point
         [0.00000000, 1.00000000],  # power_outage
@@ -212,9 +212,11 @@ class CityEnvForTraining(Env):
         obs = modify_obs(self.env.reset(), self.forecaster, self.metadata)
 
         # if self.evaluation_model is not None:
-        #     test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881, 0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0, 0.19288472831249237, -0.555773913860321, 0.0, 0.16414415836334229, 0.5525509585834176, 0.04521620637206958, 0.0, 1.8179616928100586]
-        #     test_action, _ = self.evaluation_model.predict(test_obs, deterministic=True)
-        #     print(test_action)
+            # test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881,
+            #             0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0,
+            #             0.19288472831249237, -0.555773913860321, 0.0]
+            # test_action, _ = self.evaluation_model.predict(test_obs, deterministic=True)
+            # print(test_action)
 
         return obs[self.active_building_ID]
 
@@ -227,6 +229,7 @@ class CityEnvForTraining(Env):
                 actions_of_all_buildings.append(action_of_active_building)
             else:
                 action_of_other_building, _ = self.evaluation_model.predict(observations_of_all_buildings[i], deterministic=True)
+                # self.evaluation_model.set_training_mode(False) ?
                 actions_of_all_buildings.append(action_of_other_building)
 
         actions = modify_action(actions_of_all_buildings, self.metadata)

@@ -3,6 +3,7 @@ from citylearn.citylearn import CityLearnEnv
 from citylearn.utilities import read_json
 from stable_baselines3.common.callbacks import BaseCallback
 
+from agents.ppo_agent import PPOAgent
 from rewards.user_reward import SubmissionReward
 
 act_mapping = {
@@ -131,29 +132,34 @@ def init_environment(buildings_to_use, simulation_start_end=None, **kwargs) -> C
 class CustomCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
-    TODO maybe use EvalCallback
 
     :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     """
 
-    def __init__(self, verbose=0):
+    def __init__(self, eval_agent, eval_interval, verbose=0):
         super(CustomCallback, self).__init__(verbose)
-        # Those variables will be accessible in the callback
-        # (they are defined in the base class)
+        # Those variables will be accessible in the callback (they are defined in the base class):
+
         # The RL model
         # self.model = None  # type: BaseAlgorithm
+        self.eval_agent = eval_agent
+
         # An alias for self.model.get_env(), the environment used for training
         # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
+
         # Number of time the callback was called
-        # self.n_calls = 0  # type: int
+        self.n_calls = 0  # type: int
+        self.eval_interval = eval_interval  # type: int
         # self.num_timesteps = 0  # type: int
+
         # local and global variables
         # self.locals = None  # type: Dict[str, Any]
         # self.globals = None  # type: Dict[str, Any]
+
         # The logger object, used to report things in the terminal
         # self.logger = None  # stable_baselines3.common.logger
-        # # Sometimes, for event callback, it is useful
-        # # to have access to the parent object
+
+        # Sometimes, for event callback, it is useful to have access to the parent object
         # self.parent = None  # type: Optional[BaseCallback]
 
     def _on_training_start(self) -> None:
@@ -188,8 +194,42 @@ class CustomCallback(BaseCallback):
                 0.0, 0.20000000298023224, -0.7879400478671584, -0.7350756349894276, -1.0, 2.0, 0.03649693909301721, 0.0, -0.0032205581665039062]
         get initial obs not hard coded
         """
-        value_at_initial_state = np.random.random()  # self.model.policy.predict_values()
+        value_at_initial_state = np.random.random()  # self.model.policy.predict_values() TODO
         self.logger.record("train/value_at_initial_state", value_at_initial_state)
+        if self.n_calls % self.eval_interval == 0:
+
+            eval_env = CityLearnEnv('./data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
+            eval_agent = PPOAgent(eval_env, mode='single', single_model=self.eval_agent)
+
+            observations = eval_env.reset()
+            actions = eval_agent.register_reset(observations)
+
+            J = 0
+            action_sum = np.zeros(len(eval_env.buildings) * 3)
+
+            while True:  # run one episode in eval_env with eval_agent
+                observations, reward, done, _ = eval_env.step(actions)
+                J += reward[0]
+                action_sum += np.abs(np.array(actions[0]))
+
+                if not done:
+                    actions = eval_agent.predict(observations)
+                else:
+                    metrics_df = eval_env.evaluate_citylearn_challenge()
+                    break
+
+            eval_score = metrics_df['average_score']['value']
+            mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * eval_env.episode_time_steps)
+            mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * eval_env.episode_time_steps)
+            mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * eval_env.episode_time_steps)
+
+            self.logger.record("evaluation/eval_score", eval_score)
+            self.logger.record("evaluation/eval_reward", J)
+            self.logger.record("evaluation/mean_dhw_storage_action", mean_dhw_storage_action)
+            self.logger.record("evaluation/mean_electrical_storage_action", mean_electrical_storage_action)
+            self.logger.record("evaluation/mean_cooling_device_action", mean_cooling_device_action)
+
+            self.model.policy.set_training_mode(True)
 
         return True
 
