@@ -1,7 +1,9 @@
 import numpy as np
+import torch
 from citylearn.citylearn import CityLearnEnv
 from citylearn.utilities import read_json
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.utils import obs_as_tensor
 
 from agents.ppo_agent import PPOAgent
 from rewards.user_reward import SubmissionReward
@@ -132,17 +134,17 @@ def init_environment(buildings_to_use, simulation_start_end=None, **kwargs) -> C
 class CustomCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
+    Performs an evaluation on the validation environment logging: validation_score, validation_reward,
+    value_estimates, mean_dhw_storage_action, mean_electrical_storage_action, mean_cooling_device_action
 
-    :param verbose: Verbosity level: 0 for no output, 1 for info messages, 2 for debug messages
     """
 
-    def __init__(self, eval_agent, eval_interval, verbose=0):
+    def __init__(self, eval_interval, verbose=0):
         super(CustomCallback, self).__init__(verbose)
         # Those variables will be accessible in the callback (they are defined in the base class):
 
         # The RL model
         # self.model = None  # type: BaseAlgorithm
-        self.eval_agent = eval_agent
 
         # An alias for self.model.get_env(), the environment used for training
         # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
@@ -184,33 +186,33 @@ class CustomCallback(BaseCallback):
         when the event is triggered.
 
         :return: (bool) If the callback returns False, training is aborted early.
-
-        obs1 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, -0.29995125350341834, -0.42962120149552335, -1.0,
-                0.0, 0.20000000298023224, -0.8164203192745284, -0.6642459056555935, -0.7394076716902375, 3.0, -0.2690588813720707, 0.0,
-                -0.030892372131347656]
-        obs2 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, -0.0049859863220218514, -0.5826031280309119, -1.0,
-                0.0, 0.20000000298023224, -0.9070782985257365, -1.0, -1.0, 1.0, 0.03649693909301721, 0.0, -0.04148292541503906]
-        obs3 = [0.45725104083469514, -1.6567276299991667, 0.09038573685302698, -1.0626914941222652, 0.033276380926513305, -0.5189677751741388, -1.0,
-                0.0, 0.20000000298023224, -0.7879400478671584, -0.7350756349894276, -1.0, 2.0, 0.03649693909301721, 0.0, -0.0032205581665039062]
-        get initial obs not hard coded
         """
-        value_at_initial_state = np.random.random()  # self.model.policy.predict_values() TODO
-        self.logger.record("train/value_at_initial_state", value_at_initial_state)
-        if self.n_calls % self.eval_interval == 0:
+
+        if self.n_calls % self.eval_interval == 0:  # call every n steps and perform evaluation
 
             eval_env = CityLearnEnv('./data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
-            eval_agent = PPOAgent(eval_env, mode='single', single_model=self.eval_agent)
+            eval_agent = PPOAgent(eval_env, mode='single', single_model=self.model)
 
             observations = eval_env.reset()
+
+            value_at_initial_state = eval_agent.predict_obs_value(observations)
+            self.logger.record("train/value_estimate_t0", value_at_initial_state)
+
             actions = eval_agent.register_reset(observations)
 
             J = 0
+            t = 0
             action_sum = np.zeros(len(eval_env.buildings) * 3)
 
             while True:  # run one episode in eval_env with eval_agent
                 observations, reward, done, _ = eval_env.step(actions)
                 J += reward[0]
                 action_sum += np.abs(np.array(actions[0]))
+                t += 1
+
+                if t == 400:
+                    value_estimate_t400 = eval_agent.predict_obs_value(observations)
+                    self.logger.record("train/value_estimate_t400", value_estimate_t400)
 
                 if not done:
                     actions = eval_agent.predict(observations)
@@ -223,11 +225,11 @@ class CustomCallback(BaseCallback):
             mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * eval_env.episode_time_steps)
             mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * eval_env.episode_time_steps)
 
-            self.logger.record("evaluation/eval_score", eval_score)
-            self.logger.record("evaluation/eval_reward", J)
-            self.logger.record("evaluation/mean_dhw_storage_action", mean_dhw_storage_action)
-            self.logger.record("evaluation/mean_electrical_storage_action", mean_electrical_storage_action)
-            self.logger.record("evaluation/mean_cooling_device_action", mean_cooling_device_action)
+            self.logger.record("rollout/validation_score", eval_score)
+            self.logger.record("rollout/validation_reward", J)
+            self.logger.record("train/mean_dhw_storage_action", mean_dhw_storage_action)
+            self.logger.record("train/mean_electrical_storage_action", mean_electrical_storage_action)
+            self.logger.record("train/mean_cooling_device_action", mean_cooling_device_action)
 
             self.model.policy.set_training_mode(True)
 

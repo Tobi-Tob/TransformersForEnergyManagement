@@ -1,9 +1,11 @@
 from typing import Any, List
 
 import numpy as np
+import torch
 from citylearn.agents.base import Agent
 from citylearn.citylearn import CityLearnEnv
 from stable_baselines3 import PPO
+from stable_baselines3.common.utils import obs_as_tensor
 
 from agents.forecaster import SolarGenerationForecaster
 from env_wrapper import modify_obs, modify_action
@@ -80,6 +82,14 @@ class PPOAgent(Agent):
                 self.all_observations.append(obs_modified[i])
 
         return modify_action(actions, self.building_metadata)
+
+    def predict_obs_value(self, observations):
+        obs_modified = modify_obs(observations, self.forecaster, self.building_metadata)
+        obs_value = 0
+        for obs in obs_modified:
+            value = self.models[0].policy.predict_values(obs_as_tensor(np.array(obs).reshape(1, -1), self.models[0].device))
+            obs_value += value[0][0].detach().numpy()
+        return obs_value / len(obs_modified)
 
     def set_model_index(self, idx):
         if self.mode is 'switch' or 'ensemble':

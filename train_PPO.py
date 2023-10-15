@@ -13,20 +13,22 @@ def train():
     model_id = "PPO_" + str(model_id)
     model_dir = f"my_models/{model_id}"
     log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
+
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
-    total_timesteps = 10000
-    save_interval = 1440
-    eval_interval = 720
-    learning_rate = 3e-3  # 3e-3, 5e-4 later lower lr
+    learning_rate = 3e-3  # 3e-3, 5e-4 later lower lr, value net higher lr?
     pi_network = [250, 250]  # [250, 250]
     v_network = [250, 250]  # [250, 250]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    n_steps = 720  # 720, 2000, 10.000
     batch_size = 72  # 72, 200, 500
     clip_range = 0.2
 
-    for i in [1, 2, 3]:
+    total_timesteps = 10000  # total timesteps to run in the environment
+    n_steps = 720  # 720, 2000, 10.000 number of steps to run per update
+    eval_interval = 720  # doing a validation run in the complete env
+    save_interval = 1440  # save model every n timesteps
+
+    for i in [1]:
         # Initialize the training environment
         training_buildings = [1, 2, 3]
         training_buildings.remove(i)
@@ -47,7 +49,7 @@ def train():
                     verbose=2)
 
         env.set_evaluation_model(agent)  # allow CityEnvForTraining access to the model
-        custom_callback = CustomCallback(agent, eval_interval=eval_interval)
+        custom_callback = CustomCallback(eval_interval=eval_interval)
 
         sub_id = 'm' + str(i)
         model_sub_id = model_id + '_' + sub_id

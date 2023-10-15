@@ -47,9 +47,8 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
     solar_generation_1h = forecaster['SolarGenerationForecaster'].predict_solar_generation(obs)
 
     obs = obs[0]
-    del obs[21:25]  # remove electricity pricing and predictions 6h, 12h, 24h
-    obs_district = [obs[0], obs[1], obs[2], obs[14]]  # all important district observations (4)
-    obs_buildings = obs[15:]  # all remaining building observations (#buildings * 11)
+    obs_district = [obs[0], obs[1], obs[2], obs[14]]  # all important district level observations (4)
+    obs_buildings = obs[15:21] + obs[25:]  # all remaining building level observations (#buildings * 11)
 
     # building-level observations
     assert len(obs_buildings) % 11 == 0  # 11 observations per building
