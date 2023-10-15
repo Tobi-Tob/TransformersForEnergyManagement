@@ -36,7 +36,7 @@ def train():
         env = CityEnvForTraining(env)  # Environment only for training
         env.reset()
 
-        # Initialize the agent TODO random seed initialization?
+        # Initialize the agent
         agent = PPO(policy=policy,
                     policy_kwargs=dict(activation_fn=activation_fn, net_arch=dict(pi=pi_network, vf=v_network)),
                     env=env,

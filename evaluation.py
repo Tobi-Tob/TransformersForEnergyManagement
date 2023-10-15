@@ -5,8 +5,6 @@ import time
 import os
 from random import randint
 
-from stable_baselines3 import PPO
-
 import utils
 from citylearn.citylearn import CityLearnEnv
 
@@ -102,7 +100,6 @@ def evaluate(config):
             J += reward[0]
             action_sum += np.abs(np.array(actions[0]))
             utils.print_interactions(actions, reward, observations)
-            # TODO np.round(J, decimals=2) can be nan
 
             if not done:
                 step_start = time.perf_counter()

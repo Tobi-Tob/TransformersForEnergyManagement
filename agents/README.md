@@ -4,7 +4,7 @@ Custom agents need to be a subclass of the Citylearn environment's Agent class. 
 
 ### Ideas to implement:
 - Decompose the problem into separable subproblems:
-  - Solar modul which predicts the next steps solar generation given the weather history predictions, current weather, current solar generation and building PV information (look at forecast track) (continuous learning?)
+  - Solar modul which predicts the next steps solar generation given the weather history predictions, current weather, current solar generation and building PV information (continuous learning?)
   - Heat pump controller which returns the action to control the heat pump. Input are the outdoor temp, the indoor temp difference, building specific values and maybe dependent on occupant count. The main module therefor only needs to control the storages.
   - Load modul which predicts the next steps electricity load depending on current values, time, occupant count
 - Optimize Reward function (without tableaus to guide at every position towards the desired behaviour)

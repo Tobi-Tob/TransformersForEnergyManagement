@@ -1,9 +1,7 @@
 import numpy as np
-import torch
 from citylearn.citylearn import CityLearnEnv
 from citylearn.utilities import read_json
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.utils import obs_as_tensor
 
 from agents.ppo_agent import PPOAgent
 from rewards.user_reward import SubmissionReward
@@ -55,7 +53,7 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    do_print = False
+    do_print = True
     if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]

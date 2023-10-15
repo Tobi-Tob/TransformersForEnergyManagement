@@ -1,7 +1,6 @@
 from typing import Any, List
 
 import numpy as np
-import torch
 from citylearn.agents.base import Agent
 from citylearn.citylearn import CityLearnEnv
 from stable_baselines3 import PPO

@@ -23,7 +23,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
     """
     #  --> Delete unimportant observations like pricing, 12 and 24 h predictions
     #  --> Add usefully observation e.g. temperature_diff TODO next step temperature_1h?
-    #  x   Include building specific info e.g. battery storage limit (or pre-process observation with this information)
+    #  --> Pre-process observation with building specific info e.g. pv power, annual non shiftable load estimate
     #  x   Include info of other buildings e.g. mean storage level or mean net energy consumption
     #  --> Use historic weather forecast information
     #  --> Use building solar forecaster or building power forecaster
