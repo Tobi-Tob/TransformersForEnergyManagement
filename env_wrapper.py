@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from numpy import ndarray
-from gym import Env, spaces
+from gym import Env, spaces  # TODO We strongly recommend transitioning to Gymnasium environments
 
 from agents.forecaster import SolarGenerationForecaster
 
