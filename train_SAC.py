@@ -26,7 +26,6 @@ def train():
     batch_size = 256  # 72, 200, 500
 
     total_timesteps = 1_000_000  # total timesteps to run in the environment
-    n_steps = 720  # 720, 2000, 10.000 number of steps to run per update
     eval_interval = 1440  # doing a validation run in the complete env
     save_interval = 3600  # save model every n timesteps
 
@@ -62,7 +61,7 @@ def train():
 
         # Train the agent
         for interval in range(1, int(total_timesteps/save_interval)):
-            agent.learn(total_timesteps=save_interval, log_interval=1,
+            agent.learn(total_timesteps=save_interval, log_interval=1, callback=custom_callback,
                         tb_log_name=model_sub_id, reset_num_timesteps=False, progress_bar=True)
             agent.save(f"{model_dir}/{sub_id}_{save_interval*interval}")
 

@@ -4,6 +4,7 @@ from citylearn.utilities import read_json
 from stable_baselines3.common.callbacks import BaseCallback
 
 from agents.ppo_agent import PPOAgent
+from agents.sac_agent import SACAgent
 from rewards.user_reward import SubmissionReward
 
 act_mapping = {
@@ -53,7 +54,7 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    do_print = True
+    do_print = False
     if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
@@ -189,14 +190,17 @@ class CustomCallback(BaseCallback):
         if self.n_calls % self.eval_interval == 0:  # call every n steps and perform evaluation
 
             eval_env = CityLearnEnv('./data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
-            eval_agent = PPOAgent(eval_env, mode='single', single_model=self.model)
+            eval_agent = None
+            if type(self.model).__name__ is 'SAC':
+                eval_agent = SACAgent(eval_env, mode='single', single_model=self.model)
+            elif type(self.model).__name__ is 'PPO':
+                eval_agent = PPOAgent(eval_env, mode='single', single_model=self.model)
 
             observations = eval_env.reset()
+            actions = eval_agent.register_reset(observations)
 
             value_at_initial_state = eval_agent.predict_obs_value(observations)
             self.logger.record("train/value_estimate_t0", value_at_initial_state)
-
-            actions = eval_agent.register_reset(observations)
 
             J = 0
             t = 0

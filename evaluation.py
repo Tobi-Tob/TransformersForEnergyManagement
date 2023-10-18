@@ -9,6 +9,7 @@ import utils
 from citylearn.citylearn import CityLearnEnv
 
 from agents.ppo_agent import PPOAgent
+from agents.sac_agent import SACAgent
 from agents.zero_agent import ZeroAgent
 from rewards.user_reward import SubmissionReward
 """
@@ -73,7 +74,7 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    agent = PPOAgent(wrapper_env)
+    agent = SACAgent(wrapper_env)
     # agent = ZeroAgent(wrapper_env)
 
     agent.set_model_index(0)
@@ -150,7 +151,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 9
+        num_episodes = 18
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)
