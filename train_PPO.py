@@ -1,26 +1,28 @@
+import argparse
 import datetime
 import torch
-from citylearn.citylearn import CityLearnEnv
-from rewards.user_reward import SubmissionReward
 from env_wrapper import CityEnvForTraining
 from stable_baselines3 import PPO
 from utils import init_environment, CustomCallback
 
 
 def train():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--id", type=str, default=None)
+    args = parser.parse_args()
     # Model name
-    model_id = 1
+    model_id = 2 if args.id is None else args.id
     model_id = "PPO_" + str(model_id)
     model_dir = f"my_models/{model_id}"
     log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
 
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
-    learning_rate = 3e-3  # 3e-3, 5e-4 later lower lr, value net higher lr?
-    pi_network = [250, 250]  # [250, 250]
-    v_network = [250, 250]  # [250, 250]
+    learning_rate = 3e-3
+    pi_network = [250, 250]
+    v_network = [250, 250]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    batch_size = 360  # 72, 200, 500
+    batch_size = 360
     clip_range = 0.2
 
     total_timesteps = 1_000_000  # total timesteps to run in the environment
@@ -66,5 +68,5 @@ def train():
 if __name__ == '__main__':
     train()
 
-# python train_PPO.py --model_id 1 --lr 3e-3 --steps 20000
+# python train_PPO.py --id 1
 # tensorboard --logdir=logs

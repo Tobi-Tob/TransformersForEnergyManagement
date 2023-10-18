@@ -5,6 +5,8 @@ import time
 import os
 from random import randint
 
+from stable_baselines3 import SAC
+
 import utils
 from citylearn.citylearn import CityLearnEnv
 
@@ -74,13 +76,14 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    agent = SACAgent(wrapper_env)
-    # agent = ZeroAgent(wrapper_env)
+    model = SAC.load("my_models/SAC_4/m1_1438_steps.zip")
+    agent = SACAgent(wrapper_env, mode='single', single_model=model)
+    # agent = SACAgent(wrapper_env, mode='submission')
 
     agent.set_model_index(0)
     switch_models = True
 
-    env = update_power_outage_random_seed(env, randint(0, 99999))
+    # env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
 
     agent_time_elapsed = 0
@@ -151,7 +154,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 18
+        num_episodes = 1
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

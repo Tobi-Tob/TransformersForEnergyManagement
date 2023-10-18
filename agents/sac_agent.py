@@ -32,7 +32,7 @@ class SACAgent(Agent):
             self.models.append(single_model)
             self.models[0].policy.set_training_mode(False)
         else:
-            model = SAC.load("my_models/submission_models/SAC_1_m1_3600.zip")
+            model = SAC.load("my_models/submission_models/SAC_3_m1_4314.zip")
             model_id = type(model).__name__
             self.models.append(model)
             self.models[0].policy.set_training_mode(False)
@@ -54,7 +54,7 @@ class SACAgent(Agent):
         )
         if self.save_observations:
             self.all_observations = []
-        # print(self.models[self.model_index].policy)
+        # print(self.models[0].policy)
 
     def register_reset(self, observations):
         """ Register reset needs the first set of actions after reset """

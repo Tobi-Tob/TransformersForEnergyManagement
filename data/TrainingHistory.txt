@@ -112,3 +112,19 @@ Total agent time: 31.93s
 ====>  Score:             0.629400292403575
 Number of episodes with power outage: 8 / 18
 
+======================= Completed: 18.10.2023 17:50:05 =======================
+{'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster'], 'num_timesteps': 4314, 'learning_rate': 0.0003} TempDiffReward
+SAC_3_m1_4314.zip
+Total agent time: 34.85s
+0.1    Carbon emissions   0.9496
+0.3    Unmet hours        0.212
+0.075  Ramping            1.014
+0.075  Load factor        0.9835
+0.075  Daily peak         0.9228
+0.075  All-time peak      0.8837
+0.15   Thermal resilience 0.5951
+0.15   Unserved energy    0.6053
+====>  Score:             0.6239419638520434
+Number of episodes with power outage: 10 / 18
+
+

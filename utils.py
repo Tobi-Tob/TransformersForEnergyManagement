@@ -98,13 +98,15 @@ def print_metrics(episode_metrics):
         print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
 
-def init_environment(buildings_to_use, simulation_start_end=None, **kwargs) -> CityLearnEnv:
+def init_environment(buildings_to_use, reward_function=SubmissionReward, simulation_start_end=None, **kwargs) -> CityLearnEnv:
     r"""Initialize `CityLearnEnv` and returns the environment
 
         Parameters
         ----------
         buildings_to_use: list[int]
             List to define which buildings are used in the environment, example: [1,2,4,17].
+        reward_function: RewardFunction
+            Reward function to use
         simulation_start_end: list[int]
             List to define start and end time step, example: [0,8759].
 
@@ -126,7 +128,7 @@ def init_environment(buildings_to_use, simulation_start_end=None, **kwargs) -> C
         if building_id in dict_buildings:
             dict_buildings[building_id]['include'] = True
 
-    env = CityLearnEnv(schema, reward_function=SubmissionReward)
+    env = CityLearnEnv(schema, reward_function=reward_function)
     return env
 
 
