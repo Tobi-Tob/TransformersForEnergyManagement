@@ -60,7 +60,7 @@ class SolarGenerationForecaster:
         diffuse_solar_6h = obs[7]
         direct_solar = obs[10]
         direct_solar_6h = obs[11]
-        building_solar_generation = obs[17] / self._pv_nominal_power  # TODO?
+        building_solar_generation = obs[17] / self._pv_nominal_power  # TODO specific buildings nominal power
 
         # update prediction history
         self._diffuse_solar_irradiance_predictions[0:5] = self._diffuse_solar_irradiance_predictions[1:6]

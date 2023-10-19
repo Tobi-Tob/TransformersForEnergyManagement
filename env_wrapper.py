@@ -3,9 +3,9 @@ from typing import List
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from numpy import ndarray
-from gym import Env, spaces  # TODO We strongly recommend transitioning to Gymnasium environments
+from gym import Env, spaces  # TODO gymnasium?
 
-from agents.forecaster import SolarGenerationForecaster
+from agents.forecaster import SolarGenerationForecaster, TemperatureForecaster
 
 '''
 File to modify the observation and action space and wrap the citylearn environment
@@ -16,14 +16,14 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
     """
     Input: (1,52), Output: (3, 16)
     Modify the observation space to:
-    [['day_type', 'hour', 'outdoor_dry_bulb_temperature', 'carbon_intensity', 'indoor_dry_bulb_temperature',
-    'non_shiftable_load', 'solar_generation_1h_predicted', 'dhw_storage_soc', 'electrical_storage_soc',
-    'net_electricity_consumption', 'cooling_demand', 'dhw_demand', 'occupant_count',
-    'indoor_dry_bulb_temperature_set_point', 'power_outage', 'indoor_temperature_difference'],...]
+    [['day_type', 'hour', 'outdoor_dry_bulb_temperature', 'outdoor_temperature_1h_predicted' 'carbon_intensity',
+    'indoor_dry_bulb_temperature', 'non_shiftable_load', 'solar_generation_1h_predicted', 'dhw_storage_soc',
+    'electrical_storage_soc', 'net_electricity_consumption', 'cooling_demand', 'dhw_demand', 'occupant_count',
+    'indoor_temperature_difference_to_set_point', 'power_outage'],...]
     """
     #  --> Delete unimportant observations like pricing, 12 and 24 h predictions
-    #  --> Add usefully observation e.g. temperature_diff TODO next step temperature_1h?
-    #  --> Pre-process observation with building specific info e.g. pv power, annual non shiftable load estimate
+    #  --> Add usefully observation e.g. temperature_diff
+    #  --> Pre-process observation with building specific info e.g. pv power, annual non-shiftable load estimate
     #  x   Include info of other buildings e.g. mean storage level or mean net energy consumption
     #  --> Use historic weather forecast information
     #  --> Use building solar forecaster or building power forecaster
@@ -45,9 +45,10 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
         annual_solar_generation_estimate.append(building_metadata['annual_solar_generation_estimate'])
 
     solar_generation_1h = forecaster['SolarGenerationForecaster'].forecast(obs)
+    temperature_1h = forecaster['TemperatureForecaster'].forecast(obs)
 
     obs = obs[0]
-    obs_district = [obs[0], obs[1], obs[2], obs[14]]  # all important district level observations (4)
+    obs_district = [obs[0], obs[1], obs[2], temperature_1h, obs[14]]  # all important district level observations (5)
     obs_buildings = obs[15:21] + obs[25:]  # all remaining building level observations (#buildings * 11)
 
     # building-level observations
@@ -56,9 +57,9 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
     assert len(obs_single_building) == len(buildings)
     for i, b in enumerate(obs_single_building):
         temperature_diff = b[0] - b[9]  # indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point
+        b[9] = temperature_diff  # replace with temperature difference to set point
         b[2] = solar_generation_1h * pv_nominal_powers[i]  # replace with solar generation prediction
-        b.append(temperature_diff)  # add temperature difference
-        assert len(b) == 12
+        assert len(b) == 11
 
     obs_modified = []
     normalizations = get_obs_normalization(metadata)
@@ -69,7 +70,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
                 obs[j] = (obs[j] - normalizations[j][0][i]) / normalizations[j][1][i]
             else:
                 obs[j] = (obs[j] - normalizations[j][0]) / normalizations[j][1]
-        assert len(obs) == 4 + 12
+        assert len(obs) == 5 + 11
         obs_modified.append(obs)
 
     return obs_modified
@@ -97,25 +98,25 @@ def modify_action(action: List[ndarray], metadata) -> List[List[float]]:
 
 
 def get_modified_observation_space():
-    observation_dim = 16
+    observation_dim = 16  # TODO right bounds?
     low_limit = np.zeros(observation_dim)
     high_limit = np.zeros(observation_dim)
     low_limit[0], high_limit[0] = -1.58, 1.48  # day_type
     low_limit[1], high_limit[1] = -1.66, 1.67  # hour
     low_limit[2], high_limit[2] = -0.73, 4.01  # outdoor_dry_bulb_temperature
-    low_limit[3], high_limit[3] = -2.40, 2.09  # carbon_intensity
-    low_limit[4], high_limit[4] = -5, 5  # indoor_dry_bulb_temperature
-    low_limit[5], high_limit[5] = -1, 20  # non_shiftable_load
-    low_limit[6], high_limit[6] = -1, 3  # solar_generation_1h_predicted
-    low_limit[7], high_limit[7] = 0, 1  # dhw_storage_soc
-    low_limit[8], high_limit[8] = 0, 1  # electrical_storage_soc
-    low_limit[9], high_limit[9] = -5, 10  # net_electricity_consumption
-    low_limit[10], high_limit[10] = -1, 100  # cooling_demand
-    low_limit[11], high_limit[11] = -1, 100  # dhw_demand
-    low_limit[12], high_limit[12] = 0, 3  # occupant_count
-    low_limit[13], high_limit[13] = -1.08, 0.74  # indoor_dry_bulb_temperature_set_point
-    low_limit[14], high_limit[14] = 0, 1  # power_outage
-    low_limit[15], high_limit[15] = -5, 5  # temperature_difference
+    low_limit[3], high_limit[3] = -0.73, 4.01  # outdoor_temperature_1h_prediction
+    low_limit[4], high_limit[4] = -2.40, 2.09  # carbon_intensity
+    low_limit[5], high_limit[5] = -5, 5  # indoor_dry_bulb_temperature
+    low_limit[6], high_limit[6] = -1, 20  # non_shiftable_load
+    low_limit[7], high_limit[7] = -1, 3  # solar_generation_1h_predicted
+    low_limit[8], high_limit[8] = 0, 1  # dhw_storage_soc
+    low_limit[9], high_limit[9] = 0, 1  # electrical_storage_soc
+    low_limit[10], high_limit[10] = -5, 10  # net_electricity_consumption
+    low_limit[11], high_limit[11] = -1, 100  # cooling_demand
+    low_limit[12], high_limit[12] = -1, 100  # dhw_demand
+    low_limit[13], high_limit[13] = 0, 3  # occupant_count
+    low_limit[14], high_limit[14] = -5, 5  # temperature_difference to set point
+    low_limit[15], high_limit[15] = 0, 1  # power_outage
 
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
@@ -152,11 +153,12 @@ def get_obs_normalization(metadata):
         # [345.7142639160156, 172.8571319580078, 345.7142639160156]
         net_e_consumption_estimate.append(cooling_demand + dhw_demand + non_shiftable_load - solar_generation)
 
-    return [
+    normalizations = [  # TODO change normalization?
         #   -mean-      -std-
         [4.09861111, 1.97132168],  # day_type
         [12.4680556, 6.92211284],  # hour
         [24.2984569, 4.00000000],  # outdoor_dry_bulb_temperature
+        [24.2984569, 4.00000000],  # outdoor_temperature_1h_prediction
         [0.45429827, 0.04875349],  # carbon_intensity
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature
         [non_shiftable_load_estimate, non_shiftable_load_estimate],  # non_shiftable_load (high max 19)
@@ -167,10 +169,10 @@ def get_obs_normalization(metadata):
         [cooling_demand_estimate, cooling_demand_estimate],  # cooling_demand
         [dhw_demand_estimate, dhw_demand_estimate],  # dhw_demand (high std 2.9 and max 52)
         [0.00000000, 1.00000000],  # occupant_count
-        [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature_set_point
-        [0.00000000, 1.00000000],  # power_outage
         [0.00000000, 4.00000000],  # temperature_difference_to_set_point
+        [0.00000000, 1.00000000],  # power_outage
     ]
+    return normalizations
 
 
 class CityEnvForTraining(Env):
@@ -181,8 +183,10 @@ class CityEnvForTraining(Env):
         self.evaluation_model = None
 
         SGF = SolarGenerationForecaster()
+        TF = TemperatureForecaster()
         self.forecaster = {
-            type(SGF).__name__: SGF
+            type(SGF).__name__: SGF,
+            type(TF).__name__: TF
         }
 
         self.num_buildings = len(env.buildings)

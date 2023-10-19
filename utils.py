@@ -98,7 +98,7 @@ def print_metrics(episode_metrics):
         print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
 
-def init_environment(buildings_to_use, reward_function=SubmissionReward, simulation_start_end=None, **kwargs) -> CityLearnEnv:
+def init_environment(buildings_to_use, simulation_start_end=None, reward_function=SubmissionReward, **kwargs) -> CityLearnEnv:
     r"""Initialize `CityLearnEnv` and returns the environment
 
         Parameters

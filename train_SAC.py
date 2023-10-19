@@ -5,6 +5,8 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 
 from env_wrapper import CityEnvForTraining
 from stable_baselines3 import SAC
+
+from rewards.temp_diff_reward import TempDiffReward
 from utils import init_environment, CustomCallback
 
 
@@ -27,7 +29,7 @@ def train():
     buffer_size = 100_000
     batch_size = 256
 
-    total_timesteps = 1_000_000  # total timesteps to run in the environment
+    total_timesteps = 100_000  # total timesteps to run in the environment
     eval_interval = 1438  # doing a validation run in the complete env
     save_interval = 1438  # save model every n timesteps
 
@@ -35,7 +37,7 @@ def train():
         # Initialize the training environment
         training_buildings = [1, 2, 3]
         training_buildings.remove(i)
-        env = init_environment(training_buildings, [0, 719])
+        env = init_environment(training_buildings, [0, 719], reward_function=TempDiffReward)
         env = CityEnvForTraining(env)  # Environment only for training
         env.reset()
 
@@ -64,7 +66,7 @@ def train():
         checkpoint_callback = CheckpointCallback(save_path=model_dir, save_freq=save_interval, name_prefix=sub_id, save_vecnormalize=True, verbose=2)
 
         # Train the agent
-        agent.learn(total_timesteps=total_timesteps, log_interval=1, callback=[custom_callback, checkpoint_callback],
+        agent.learn(total_timesteps=total_timesteps, callback=[custom_callback, checkpoint_callback], log_interval=1,
                     tb_log_name=model_sub_id, reset_num_timesteps=False, progress_bar=True)
 
         agent.save(f"{model_dir}/{sub_id}_complete")

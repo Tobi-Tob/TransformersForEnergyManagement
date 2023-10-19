@@ -7,7 +7,7 @@ from citylearn.citylearn import CityLearnEnv
 from stable_baselines3 import SAC
 from stable_baselines3.common.utils import obs_as_tensor
 
-from agents.forecaster import SolarGenerationForecaster
+from agents.forecaster import SolarGenerationForecaster, TemperatureForecaster
 from env_wrapper import modify_obs, modify_action
 
 
@@ -38,8 +38,10 @@ class SACAgent(Agent):
             self.models[0].policy.set_training_mode(False)
 
         SGF = SolarGenerationForecaster()
+        TF = TemperatureForecaster()
         self.forecaster = {
-            type(SGF).__name__: SGF
+            type(SGF).__name__: SGF,
+            type(TF).__name__: TF
         }
         names = []
         for forecaster_name in self.forecaster.keys():
