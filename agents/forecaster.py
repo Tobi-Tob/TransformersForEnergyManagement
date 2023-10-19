@@ -127,7 +127,7 @@ def train_solar_forecaster(save_model: bool):
 
     for epoch in range(n_epochs):
         if epoch == 100:  # lower learning rate
-            optimizer = optim.Adam(model.parameters(), lr=lr/10)
+            optimizer = optim.Adam(model.parameters(), lr=lr / 10)
         model.train()
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0) as bar:
             bar.set_description(f"Epoch {epoch}")
@@ -195,10 +195,19 @@ class TemperatureForecaster:
         Returns the predicted temperature of next time step given the weather.
         """
         X = self.modify_obs(observation)
+        given_prediction = X[0][2]
         X = torch.tensor(self.scaler.transform(X), dtype=torch.float32)
-        next_temperature_prediction = self.model(X).detach().numpy()[0][0]
+        model_prediction = self.model(X).detach().numpy()[0][0]
 
-        return next_temperature_prediction
+        def parametric_sigmoid(x):
+            a = 7
+            b = 1.3
+            return 1 / (1 + np.exp(-a * (x - b)))
+
+        diff = np.abs(model_prediction - given_prediction)
+        model_prediction = parametric_sigmoid(diff) * given_prediction + (1-parametric_sigmoid(diff)) * model_prediction
+
+        return model_prediction
 
     def modify_obs(self, obs: List[List[float]]) -> np.array:
         """
@@ -225,7 +234,7 @@ class TemperatureForecaster:
         self._direct_solar_irradiance_predictions[5] = direct_solar_6h
 
         temperature_1h = self._temperature_predictions[0] if not np.isnan(self._temperature_predictions[0]) else temperature
-        direct_solar_1h = self._direct_solar_irradiance_predictions[0] if not np.isnan(self._direct_solar_irradiance_predictions[0])\
+        direct_solar_1h = self._direct_solar_irradiance_predictions[0] if not np.isnan(self._direct_solar_irradiance_predictions[0]) \
             else direct_solar
 
         obs_modified = np.array([[hour, temperature, temperature_1h, direct_solar, direct_solar_1h]])
@@ -281,7 +290,7 @@ def train_temperature_forecaster(save_model: bool):
 
     for epoch in range(n_epochs):
         if epoch == 200:  # lower learning rate
-            optimizer = optim.Adam(model.parameters(), lr=lr/2)
+            optimizer = optim.Adam(model.parameters(), lr=lr / 2)
         model.train()
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0) as bar:
             bar.set_description(f"Epoch {epoch}")

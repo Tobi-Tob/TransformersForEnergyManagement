@@ -83,7 +83,7 @@ def evaluate(config):
     forecast_quailty_scores = []
 
     collect_data = False
-    evaluate_forecaster = True
+    evaluate_forecaster = False
     # forecaster = SolarGenerationForecaster()
     forecaster = TemperatureForecaster()
     X = []
@@ -141,6 +141,7 @@ def evaluate(config):
             if evaluate_forecaster:
                 target = observations[0][2]
                 error.append(np.abs(prediction - target))
+                # print('target', target, 'prediction', prediction)
 
             if collect_data:
                 next_value = observations[0][2]
