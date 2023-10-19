@@ -44,7 +44,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata) -> List[List[
         annual_non_shiftable_load_estimate.append(building_metadata['annual_non_shiftable_load_estimate'])
         annual_solar_generation_estimate.append(building_metadata['annual_solar_generation_estimate'])
 
-    solar_generation_1h = forecaster['SolarGenerationForecaster'].predict_solar_generation(obs)
+    solar_generation_1h = forecaster['SolarGenerationForecaster'].forecast(obs)
 
     obs = obs[0]
     obs_district = [obs[0], obs[1], obs[2], obs[14]]  # all important district level observations (4)

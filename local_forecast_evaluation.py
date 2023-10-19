@@ -6,7 +6,7 @@ import json
 
 from citylearn.citylearn import CityLearnEnv
 
-from agents.forecaster import SolarGenerationForecaster
+from agents.forecaster import SolarGenerationForecaster, TemperatureForecaster
 
 """
 This is only a reference script provided to allow you 
@@ -83,9 +83,12 @@ def evaluate(config):
     forecast_quailty_scores = []
 
     collect_data = False
-    SGF = SolarGenerationForecaster()
+    evaluate_forecaster = True
+    # forecaster = SolarGenerationForecaster()
+    forecaster = TemperatureForecaster()
     X = []
     y = []
+    error = []
 
     try:
         observations = env.reset()
@@ -96,7 +99,7 @@ def evaluate(config):
             ### use this script for orchestrating the evaluations.
 
             if collect_data:
-                obs_modified = SGF.modify_obs(observations)
+                obs_modified = forecaster.modify_obs(observations)[0]
                 X.append(obs_modified)
 
             step_start = time.perf_counter()
@@ -130,11 +133,18 @@ def evaluate(config):
             # ========================================================================
             actions = np.zeros((1, len(env.buildings) * 3))
 
+            if evaluate_forecaster:
+                prediction = forecaster.forecast(observations)
+
             observations, _, done, _ = env.step(actions)
 
+            if evaluate_forecaster:
+                target = observations[0][2]
+                error.append(np.abs(prediction - target))
+
             if collect_data:
-                next_solar_generation = observations[0][17] / SGF.pv_nominal_power
-                y.append(next_solar_generation)
+                next_value = observations[0][2]
+                y.append(next_value)
 
             if done:
                 break
@@ -189,8 +199,17 @@ def evaluate(config):
     if collect_data:
         print(X)
         print(y)
-        np.save("data/solar_forecast/X", np.array(X))
-        np.save("data/solar_forecast/y", np.array(y))
+        np.save("data/temperature_forecast/X", X)
+        np.save("data/temperature_forecast/y", y)
+    if evaluate_forecaster:
+        print('mean:')
+        print(np.mean(error))
+        print('std:')
+        print(np.std(error))
+        print('max:')
+        print(np.max(error))
+        print('min:')
+        print(np.min(error))
 
 
 if __name__ == '__main__':

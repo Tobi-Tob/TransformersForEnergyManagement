@@ -76,14 +76,14 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    model = SAC.load("my_models/SAC_4/m1_1438_steps.zip")
-    agent = SACAgent(wrapper_env, mode='single', single_model=model)
-    # agent = SACAgent(wrapper_env, mode='submission')
+    # model = SAC.load("my_models/SAC_4/m1_1438_steps.zip")
+    # agent = SACAgent(wrapper_env, mode='single', single_model=model)
+    agent = SACAgent(wrapper_env, mode='submission')
 
     agent.set_model_index(0)
     switch_models = True
 
-    # env = update_power_outage_random_seed(env, randint(0, 99999))
+    env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
 
     agent_time_elapsed = 0
