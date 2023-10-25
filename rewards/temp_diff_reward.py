@@ -16,7 +16,8 @@ class TempDiffReward(RewardFunction):
 
         comfort_cost = []
         for i in range(len(observations)):
-            cost = -np.clip(temperature_diff[i] - 1, a_min=0, a_max=np.inf)
+            # cost = -np.clip(temperature_diff[i] - 1, a_min=0, a_max=np.inf)  # linear also promising
+            cost = -temperature_diff[i]
             comfort_cost.append(cost)
 
         return comfort_cost

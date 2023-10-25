@@ -24,13 +24,14 @@ def train():
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
     learning_rate = 3e-4  # good between 3e-4 and 3e-3
-    pi_network = [250, 250]
-    q_network = [250, 250]
+    pi_network = [256, 256]
+    q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    buffer_size = 100_000
+    buffer_size = 20_000
     batch_size = 256
+    ent_coef = 'auto'
 
-    total_timesteps = 100_000  # total timesteps to run in the environment
+    total_timesteps = 20_000  # total timesteps to run in the environment
     eval_interval = 1438  # doing a validation run in the complete env
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
@@ -54,7 +55,7 @@ def train():
                 batch_size=batch_size,
                 tau=0.005,  # soft update coefficient
                 gamma=1,
-                # ent_coef='auto',  # Entropy regularization coefficient
+                ent_coef=ent_coef,  # Entropy regularization coefficient, 'auto'
                 # action_noise=NormalActionNoise(0.0, 0.1),
                 stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
                 tensorboard_log=log_dir,
@@ -63,14 +64,13 @@ def train():
     env.set_evaluation_model(agent)  # allow CityEnvForTraining access to the model
 
     sub_id = 'm' + str(buildings_to_remove)
-    model_sub_id = model_id + '_' + sub_id
 
     custom_callback = CustomCallback(eval_interval=eval_interval)
     checkpoint_callback = CheckpointCallback(save_path=model_dir, save_freq=save_interval, name_prefix=sub_id, save_vecnormalize=True, verbose=2)
 
     # Train the agent
     agent.learn(total_timesteps=total_timesteps, callback=[custom_callback, checkpoint_callback], log_interval=1,
-                tb_log_name=model_sub_id, reset_num_timesteps=True, progress_bar=True)
+                tb_log_name=model_id, reset_num_timesteps=True, progress_bar=True)
 
     agent.save(f"{model_dir}/{sub_id}_complete")
 

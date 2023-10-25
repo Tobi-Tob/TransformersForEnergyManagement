@@ -128,6 +128,20 @@ Total agent time: 34.85s
 Number of episodes with power outage: 10 / 18
 
 
+policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
+    learning_rate = 3e-4  # good between 3e-4 and 3e-3
+    pi_network = [250, 250]
+    q_network = [250, 250]
+    activation_fn = torch.nn.ReLU  # LeakyReLU
+    buffer_size = 100_000
+    batch_size = 256
+    total_timesteps = 100_000  # total timesteps to run in the environment
+    eval_interval = 1438  # doing a validation run in the complete env
+    save_interval = 1438  # save model every n timesteps
+    learning_starts=719,
+    tau=0.005,  # soft update coefficient
+    gamma=1,
+    ent_coef='auto',  # Entropy regularization coefficient
 ====================== Completed: 25.10.2023 19:02:34 =======================
 {'model_id': 'SAC', 'mode': 'single', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 14380, 'learning_rate': 0.0003} TempDiffReward
 Total agent time: 23.95s

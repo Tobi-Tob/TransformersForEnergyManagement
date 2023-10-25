@@ -38,7 +38,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
         buildings.append(building_metadata['name'])
         pv_nominal_powers.append(building_metadata['pv']['nominal_power'])
 
-    relative_timestep = current_timestep/metadata[0]['simulation_time_steps']
+    relative_timestep = current_timestep / metadata[0]['simulation_time_steps']
     solar_generation_1h = forecaster['SolarGenerationForecaster'].forecast(obs, pv_nominal_powers[0])
     temperature_1h = forecaster['TemperatureForecaster'].forecast(obs)
 
@@ -138,7 +138,7 @@ def _get_obs_normalization(metadata):
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature (subtract the mean temp set point)
         [0.00000000, 1.00000000],  # non_shiftable_load (unchanged)
         [0.00000000, 1.00000000],  # solar_generation_1h_predicted (unchanged)
-        [0.00000000, dhw_storage_soc_capacity],         # dhw_storage_soc (fill level * capacity)
+        [0.00000000, dhw_storage_soc_capacity],  # dhw_storage_soc (fill level * capacity)
         [0.00000000, electrical_storage_soc_capacity],  # electrical_storage_soc (fill level * capacity)
         [0.00000000, 1.00000000],  # net_electricity_consumption (unchanged)
         [0.00000000, 1.00000000],  # cooling_demand (unchanged)
@@ -147,12 +147,12 @@ def _get_obs_normalization(metadata):
         [0.00000000, 4.00000000],  # temperature_difference_to_set_point (divide by 4)
         [0.00000000, 1.00000000],  # power_outage (unchanged)
         [non_shiftable_load_estimate, non_shiftable_load_estimate],  # relative_non_shiftable_load (relative to buildings estimate)
-        [solar_generation_estimate, solar_generation_estimate],      # relative_solar_generation_1h_predicted (relative to buildings estimate)
+        [solar_generation_estimate, solar_generation_estimate],  # relative_solar_generation_1h_predicted (relative to buildings estimate)
         [0.00000000, 1.00000000],  # relative_dhw_storage_soc (unchanged)
         [0.00000000, 1.00000000],  # relative_electrical_storage_soc (unchanged)
-        [net_e_consumption_estimate, net_e_consumption_estimate],    # relative_net_electricity_consumption (relative to buildings estimate)
-        [cooling_demand_estimate, cooling_demand_estimate],          # relative_cooling_demand (relative to buildings estimate)
-        [dhw_demand_estimate, dhw_demand_estimate],                  # relative_dhw_demand (relative to buildings estimate)(high std 2.9 and max 52)
+        [net_e_consumption_estimate, net_e_consumption_estimate],  # relative_net_electricity_consumption (relative to buildings estimate)
+        [cooling_demand_estimate, cooling_demand_estimate],  # relative_cooling_demand (relative to buildings estimate)
+        [dhw_demand_estimate, dhw_demand_estimate],  # relative_dhw_demand (relative to buildings estimate)(high std 2.9 and max 52)
     ]
     return normalizations
 
@@ -161,7 +161,7 @@ def get_modified_observation_space():
     observation_dim = 24
     low_limit = np.zeros(observation_dim)
     high_limit = np.zeros(observation_dim)
-    low_limit[0], high_limit[0] = 0, 1         # relative_timestep
+    low_limit[0], high_limit[0] = 0, 1  # relative_timestep
     low_limit[1], high_limit[1] = -1.58, 1.48  # day_type
     low_limit[2], high_limit[2] = -1.66, 1.67  # hour
     low_limit[3], high_limit[3] = -0.73, 4.01  # outdoor_dry_bulb_temperature
@@ -242,11 +242,11 @@ class CityEnvForTraining(Env):
         obs = modify_obs(self.env.reset(), self.forecaster, self.metadata, self.current_timestep)
 
         # if self.evaluation_model is not None:
-            # test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881,
-            #             0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0,
-            #             0.19288472831249237, -0.555773913860321, 0.0]
-            # test_action, _ = self.evaluation_model.predict(test_obs, deterministic=True)
-            # print(test_action)
+        # test_obs = [1.4717988035316487, 0.36577623892071665, 0.4605091146284094, -0.6613356282905993, 1.6623099623810385, -0.8392258613092881,
+        #             0.8102464956499016, -0.8746554498111345, 1.3965325787525062, 1.8631778991821282, 0.44612357020378113, 1.3038498163223267, 1.0,
+        #             0.19288472831249237, -0.555773913860321, 0.0]
+        # test_action, _ = self.evaluation_model.predict(test_obs, deterministic=True)
+        # print(test_action)
 
         return obs[self.active_building_ID]
 
@@ -270,9 +270,11 @@ class CityEnvForTraining(Env):
         next_obs, reward, done, info = self.env.step(actions)
 
         self.current_timestep += 1
+        # return only the next observation and reward for one building
+        modify_obs_for_active_building = modify_obs(next_obs, self.forecaster, self.metadata, self.current_timestep)[self.active_building_ID]
+        reward_for_active_building = reward[self.active_building_ID]
 
-        # return only the next observation of the active building
-        return modify_obs(next_obs, self.forecaster, self.metadata, self.current_timestep)[self.active_building_ID], sum(reward), done, info
+        return modify_obs_for_active_building, reward_for_active_building, done, info
 
     def render(self):
         return self.env.render()
