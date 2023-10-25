@@ -101,7 +101,7 @@ def evaluate(config):
         while True:
             observations, reward, done, _ = env.step(actions)
 
-            J += reward[0]
+            J += sum(reward)
             action_sum += np.abs(np.array(actions[0]))
             utils.print_interactions(actions, reward, observations)
 
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 18
+        num_episodes = 9
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)

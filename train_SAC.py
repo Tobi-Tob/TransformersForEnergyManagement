@@ -30,10 +30,10 @@ def train():
     buffer_size = 20_000
     batch_size = 256
     gamma = 1
-    ent_coef = 'auto'
 
     total_timesteps = 20_000  # total timesteps to run in the environment
-    eval_interval = 1438  # doing a validation run in the complete env
+    eval_interval = 1438  # how frequent to do a validation run in the complete environment
+    n_eval_episodes = 3  # do n episodes for each validation run
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
@@ -56,7 +56,7 @@ def train():
                 batch_size=batch_size,
                 tau=0.005,  # soft update coefficient
                 gamma=gamma,
-                ent_coef=ent_coef,  # Entropy regularization coefficient, 'auto'
+                ent_coef='auto',  # Entropy regularization coefficient, 'auto'
                 # action_noise=NormalActionNoise(0.0, 0.1),
                 stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
                 tensorboard_log=log_dir,
@@ -66,7 +66,7 @@ def train():
 
     sub_id = 'm' + str(buildings_to_remove)
 
-    custom_callback = CustomCallback(eval_interval=eval_interval)
+    custom_callback = CustomCallback(eval_interval=eval_interval, n_eval_episodes=n_eval_episodes)
     checkpoint_callback = CheckpointCallback(save_path=model_dir, save_freq=save_interval, name_prefix=sub_id, save_vecnormalize=True, verbose=2)
 
     # Train the agent

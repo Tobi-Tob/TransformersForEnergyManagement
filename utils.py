@@ -1,3 +1,5 @@
+from random import randint
+
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from citylearn.utilities import read_json
@@ -64,10 +66,12 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        print(get_act("cooling_device_action"), "cooling_device_action")
-        print(reward, "reward")
-        print()
-        print(get_obs('indoor_dry_bulb_temperature'), get_obs('indoor_dry_bulb_temperature_set_point'))
+        if get_obs('power_outage')[0] == 1:
+            print(get_obs('day_type'), get_obs('hour'), get_obs('power_outage'))
+            print(get_act("cooling_device_action"), "cooling_device_action")
+            print(reward, "reward")
+            print()
+            print(get_obs('indoor_dry_bulb_temperature'), get_obs('indoor_dry_bulb_temperature_set_point'))
 
 
 def print_metrics(episode_metrics):
@@ -140,7 +144,7 @@ class CustomCallback(BaseCallback):
 
     """
 
-    def __init__(self, eval_interval, verbose=0):
+    def __init__(self, eval_interval, n_eval_episodes, verbose=0):
         super(CustomCallback, self).__init__(verbose)
         # Those variables will be accessible in the callback (they are defined in the base class):
 
@@ -151,6 +155,7 @@ class CustomCallback(BaseCallback):
         # Number of time the callback was called
         self.n_calls = 0  # type: int
         self.eval_interval = eval_interval  # type: int
+        self.n_eval_episodes = n_eval_episodes
 
         # The logger object, used to report things in the terminal
         # self.logger stable_baselines3.common.logger
@@ -170,14 +175,13 @@ class CustomCallback(BaseCallback):
         """
         This method will be called by the model after each call to `env.step()`.
 
-        For child callback (of an `EventCallback`), this will be called
-        when the event is triggered.
-
         :return: (bool) If the callback returns False, training is aborted early.
         """
 
         if self.n_calls % self.eval_interval == 0:  # call every n steps and perform evaluation
-
+            seed = 73055  # seed 1
+            for b in self.eval_env.buildings:
+                b.stochastic_power_outage_model.random_seed = seed
             observations = self.eval_env.reset()
             actions = self.eval_agent.register_reset(observations)
 
@@ -187,10 +191,12 @@ class CustomCallback(BaseCallback):
             J = 0
             t = 0
             action_sum = np.zeros(self.n_buildings * 3)
+            episodes_completed = 0
+            episode_metrics = []
 
-            while True:  # run one episode in eval_env with eval_agent
+            while True:  # run n episodes in eval_env with eval_agent
                 observations, reward, done, _ = self.eval_env.step(actions)
-                J += reward[0]
+                J += sum(reward)
                 action_sum += np.abs(np.array(actions[0]))
                 t += 1
 
@@ -201,21 +207,41 @@ class CustomCallback(BaseCallback):
                 if not done:
                     actions = self.eval_agent.predict(observations)
                 else:
+                    episodes_completed += 1
                     metrics_df = self.eval_env.evaluate_citylearn_challenge()
+                    episode_metrics.append(metrics_df)
+                    print(f"Evaluation Episodes complete: {episodes_completed} | J: {np.round(J/episodes_completed, decimals=2)}")
+
+                    if episodes_completed == 1:
+                        seed = 41000  # seed 2
+                    elif episodes_completed == 2:
+                        seed = 13700  # seed 3
+                    else:
+                        seed = randint(0, 99999)
+                    for b in self.eval_env.buildings:
+                        b.stochastic_power_outage_model.random_seed = seed
+
+                    observations = self.eval_env.reset()
+                    actions = self.eval_agent.register_reset(observations)
+
+                if episodes_completed >= self.n_eval_episodes:
                     break
 
-            eval_score = metrics_df['average_score']['value']
-            discomfort_proportion = metrics_df['discomfort_proportion']['value']
+            eval_score = 0
+            discomfort_proportion = 0
+            for metric in episode_metrics:
+                eval_score += metric['average_score']['value']
+                discomfort_proportion += metric['discomfort_proportion']['value']
             mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * self.eval_env.episode_time_steps)
             mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * self.eval_env.episode_time_steps)
             mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * self.eval_env.episode_time_steps)
 
-            self.logger.record("rollout/validation_score", eval_score)
-            self.logger.record("rollout/discomfort_proportion", discomfort_proportion)
-            self.logger.record("rollout/validation_reward", J)
-            self.logger.record("train/mean_dhw_storage_action", mean_dhw_storage_action)
-            self.logger.record("train/mean_electrical_storage_action", mean_electrical_storage_action)
-            self.logger.record("train/mean_cooling_device_action", mean_cooling_device_action)
+            self.logger.record("rollout/validation_score", eval_score / self.n_eval_episodes)
+            self.logger.record("rollout/discomfort_proportion", discomfort_proportion / self.n_eval_episodes)
+            self.logger.record("rollout/validation_reward", J / self.n_eval_episodes)
+            self.logger.record("train/mean_dhw_storage_action", mean_dhw_storage_action / self.n_eval_episodes)
+            self.logger.record("train/mean_electrical_storage_action", mean_electrical_storage_action / self.n_eval_episodes)
+            self.logger.record("train/mean_cooling_device_action", mean_cooling_device_action / self.n_eval_episodes)
 
             self.model.policy.set_training_mode(True)
 

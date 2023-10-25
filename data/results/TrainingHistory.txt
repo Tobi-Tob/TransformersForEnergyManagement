@@ -188,3 +188,21 @@ SAC_all_temp_5752.zip
 ====>  Score:             0.6496677916887195
 Number of episodes with power outage: 5 / 18
 
+======================= Completed: 26.10.2023 01:46:29 =======================
+{'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 4314, 'learning_rate': 0.0003} TempDiffReward
+Total agent time: 19.49s
+SAC_all_temp_4314.zip
+0.1    Carbon emissions   0.992
+0.3    Unmet hours        0.0955
+0.075  Ramping            1.2271
+0.075  Load factor        1.0135
+0.075  Daily peak         0.9597
+0.075  All-time peak      0.9578
+0.15   Thermal resilience 0.446
+0.15   Unserved energy    0.5465
+====>  Score:             0.5885894193496735
+Number of episodes with power outage: 5 / 9
+
+Process finished with exit code 0
+
+
