@@ -30,47 +30,49 @@ def train():
     buffer_size = 100_000
     batch_size = 256
 
-    total_timesteps = 18_700  # total timesteps to run in the environment
+    total_timesteps = 100_000  # total timesteps to run in the environment
     eval_interval = 1438  # doing a validation run in the complete env
     save_interval = 1438  # save model every n timesteps
+    buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
-    for i in [1]:  # list of validation buildings
-        # Initialize the training environment
-        training_buildings = [1, 2, 3]
-        training_buildings.remove(i)
-        env = init_environment(training_buildings, [0, 719], reward_function=TempDiffReward)
-        env = CityEnvForTraining(env)  # Environment only for training
-        env.reset()
+    # Initialize the training environment
+    training_buildings = [1, 2, 3]
+    if buildings_to_remove is not 0:
+        training_buildings.remove(buildings_to_remove)
 
-        # Initialize the agent
-        agent = SAC(policy=policy,
-                    policy_kwargs=dict(activation_fn=activation_fn, net_arch=dict(pi=pi_network, qf=q_network)),
-                    env=env,
-                    learning_rate=learning_rate,
-                    buffer_size=buffer_size,
-                    learning_starts=100,
-                    batch_size=batch_size,
-                    tau=0.005,  # soft update coefficient
-                    gamma=1,
-                    # ent_coef='auto',  # Entropy regularization coefficient
-                    # action_noise=NormalActionNoise(0.0, 0.1),
-                    stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
-                    tensorboard_log=log_dir,
-                    verbose=2)
+    env = init_environment(training_buildings, [0, 719], reward_function=TempDiffReward)
+    env = CityEnvForTraining(env)  # Environment only for training
+    env.reset()
 
-        env.set_evaluation_model(agent)  # allow CityEnvForTraining access to the model
+    # Initialize the agent
+    agent = SAC(policy=policy,
+                policy_kwargs=dict(activation_fn=activation_fn, net_arch=dict(pi=pi_network, qf=q_network)),
+                env=env,
+                learning_rate=learning_rate,
+                buffer_size=buffer_size,
+                learning_starts=719,
+                batch_size=batch_size,
+                tau=0.005,  # soft update coefficient
+                gamma=1,
+                # ent_coef='auto',  # Entropy regularization coefficient
+                # action_noise=NormalActionNoise(0.0, 0.1),
+                stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
+                tensorboard_log=log_dir,
+                verbose=2)
 
-        sub_id = 'm' + str(i)
-        model_sub_id = model_id + '_' + sub_id
+    env.set_evaluation_model(agent)  # allow CityEnvForTraining access to the model
 
-        custom_callback = CustomCallback(eval_interval=eval_interval)
-        checkpoint_callback = CheckpointCallback(save_path=model_dir, save_freq=save_interval, name_prefix=sub_id, save_vecnormalize=True, verbose=2)
+    sub_id = 'm' + str(buildings_to_remove)
+    model_sub_id = model_id + '_' + sub_id
 
-        # Train the agent
-        agent.learn(total_timesteps=total_timesteps, callback=[custom_callback, checkpoint_callback], log_interval=1,
-                    tb_log_name=model_sub_id, reset_num_timesteps=True, progress_bar=True)
+    custom_callback = CustomCallback(eval_interval=eval_interval)
+    checkpoint_callback = CheckpointCallback(save_path=model_dir, save_freq=save_interval, name_prefix=sub_id, save_vecnormalize=True, verbose=2)
 
-        agent.save(f"{model_dir}/{sub_id}_complete")
+    # Train the agent
+    agent.learn(total_timesteps=total_timesteps, callback=[custom_callback, checkpoint_callback], log_interval=1,
+                tb_log_name=model_sub_id, reset_num_timesteps=True, progress_bar=True)
+
+    agent.save(f"{model_dir}/{sub_id}_complete")
 
 
 if __name__ == '__main__':
