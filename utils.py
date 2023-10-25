@@ -135,7 +135,7 @@ def init_environment(buildings_to_use, simulation_start_end=None, reward_functio
 class CustomCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
-    Performs an evaluation on the validation environment logging: validation_score, validation_reward,
+    Performs an evaluation on the validation environment logging: validation_scores, validation_reward,
     value_estimates, mean_dhw_storage_action, mean_electrical_storage_action, mean_cooling_device_action
 
     """
@@ -144,40 +144,27 @@ class CustomCallback(BaseCallback):
         super(CustomCallback, self).__init__(verbose)
         # Those variables will be accessible in the callback (they are defined in the base class):
 
-        # The RL model
-        # self.model = None  # type: BaseAlgorithm
-
+        # self.model type: BaseAlgorithm
         # An alias for self.model.get_env(), the environment used for training
-        # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
+        # self.training_env type: Union[gym.Env, VecEnv, None]
 
         # Number of time the callback was called
         self.n_calls = 0  # type: int
         self.eval_interval = eval_interval  # type: int
-        # self.num_timesteps = 0  # type: int
-
-        # local and global variables
-        # self.locals = None  # type: Dict[str, Any]
-        # self.globals = None  # type: Dict[str, Any]
 
         # The logger object, used to report things in the terminal
-        # self.logger = None  # stable_baselines3.common.logger
-
-        # Sometimes, for event callback, it is useful to have access to the parent object
-        # self.parent = None  # type: Optional[BaseCallback]
+        # self.logger stable_baselines3.common.logger
 
     def _on_training_start(self) -> None:
         """
         This method is called before the first rollout starts.
         """
-        pass
-
-    def _on_rollout_start(self) -> None:
-        """
-        A rollout is the collection of environment interaction
-        using the current policy.
-        This event is triggered before collecting new samples.
-        """
-        pass
+        self.eval_env = CityLearnEnv('./data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
+        self.n_buildings = len(self.eval_env.buildings)
+        if type(self.model).__name__ is 'SAC':
+            self.eval_agent = SACAgent(self.eval_env, mode='single', single_model=self.model)
+        elif type(self.model).__name__ is 'PPO':
+            self.eval_agent = PPOAgent(self.eval_env, mode='single', single_model=self.model)
 
     def _on_step(self) -> bool:
         """
@@ -191,44 +178,37 @@ class CustomCallback(BaseCallback):
 
         if self.n_calls % self.eval_interval == 0:  # call every n steps and perform evaluation
 
-            eval_env = CityLearnEnv('./data/schemas/warm_up/schema.json', reward_function=SubmissionReward)
-            eval_agent = None
-            if type(self.model).__name__ is 'SAC':
-                eval_agent = SACAgent(eval_env, mode='single', single_model=self.model)
-            elif type(self.model).__name__ is 'PPO':
-                eval_agent = PPOAgent(eval_env, mode='single', single_model=self.model)
+            observations = self.eval_env.reset()
+            actions = self.eval_agent.register_reset(observations)
 
-            observations = eval_env.reset()
-            actions = eval_agent.register_reset(observations)
-
-            value_at_initial_state = eval_agent.predict_obs_value(observations)
+            value_at_initial_state = self.eval_agent.predict_obs_value(observations)
             self.logger.record("train/value_estimate_t0", value_at_initial_state)
 
             J = 0
             t = 0
-            action_sum = np.zeros(len(eval_env.buildings) * 3)
+            action_sum = np.zeros(self.n_buildings * 3)
 
             while True:  # run one episode in eval_env with eval_agent
-                observations, reward, done, _ = eval_env.step(actions)
+                observations, reward, done, _ = self.eval_env.step(actions)
                 J += reward[0]
                 action_sum += np.abs(np.array(actions[0]))
                 t += 1
 
                 if t == 700:
-                    value_estimate_t700 = eval_agent.predict_obs_value(observations)
+                    value_estimate_t700 = self.eval_agent.predict_obs_value(observations)
                     self.logger.record("train/value_estimate_t700", value_estimate_t700)
 
                 if not done:
-                    actions = eval_agent.predict(observations)
+                    actions = self.eval_agent.predict(observations)
                 else:
-                    metrics_df = eval_env.evaluate_citylearn_challenge()
+                    metrics_df = self.eval_env.evaluate_citylearn_challenge()
                     break
 
             eval_score = metrics_df['average_score']['value']
             discomfort_proportion = metrics_df['discomfort_proportion']['value']
-            mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * eval_env.episode_time_steps)
-            mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * eval_env.episode_time_steps)
-            mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * eval_env.episode_time_steps)
+            mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * self.eval_env.episode_time_steps)
+            mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * self.eval_env.episode_time_steps)
+            mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * self.eval_env.episode_time_steps)
 
             self.logger.record("rollout/validation_score", eval_score)
             self.logger.record("rollout/discomfort_proportion", discomfort_proportion)
@@ -240,15 +220,3 @@ class CustomCallback(BaseCallback):
             self.model.policy.set_training_mode(True)
 
         return True
-
-    def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        pass
-
-    def _on_training_end(self) -> None:
-        """
-        This event is triggered before exiting the `learn()` method.
-        """
-        pass
