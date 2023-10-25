@@ -157,3 +157,34 @@ SAC_temp_clip_1_14380.zip
 ====>  Score:             0.7025411253547447
 Number of episodes with power outage: 7 / 12
 
+
+policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
+    learning_rate = 3e-4  # good between 3e-4 and 3e-3
+    pi_network = [256, 256]
+    q_network = [256, 256]
+    activation_fn = torch.nn.ReLU  # LeakyReLU
+    buffer_size = 20_000
+    batch_size = 256
+    gamma = 1
+    ent_coef = 'auto'
+
+    total_timesteps = 20_000  # total timesteps to run in the environment
+    eval_interval = 1438  # doing a validation run in the complete env
+    save_interval = 1438  # save model every n timesteps
+    buildings_to_remove = 0  # 0 to use all 3 buildings for training
+
+======================= Completed: 25.10.2023 23:14:39 =======================
+{'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 5752, 'learning_rate': 0.0003} TempDiffReward
+Total agent time: 40.32s
+SAC_all_temp_5752.zip
+0.1    Carbon emissions   0.9697
+0.3    Unmet hours        0.0924
+0.075  Ramping            1.2513
+0.075  Load factor        1.0433
+0.075  Daily peak         0.9874
+0.075  All-time peak      0.9193
+0.15   Thermal resilience 0.6449
+0.15   Unserved energy    0.7542
+====>  Score:             0.6496677916887195
+Number of episodes with power outage: 5 / 18
+

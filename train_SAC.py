@@ -29,6 +29,7 @@ def train():
     activation_fn = torch.nn.ReLU  # LeakyReLU
     buffer_size = 20_000
     batch_size = 256
+    gamma = 1
     ent_coef = 'auto'
 
     total_timesteps = 20_000  # total timesteps to run in the environment
@@ -54,7 +55,7 @@ def train():
                 learning_starts=719,
                 batch_size=batch_size,
                 tau=0.005,  # soft update coefficient
-                gamma=1,
+                gamma=gamma,
                 ent_coef=ent_coef,  # Entropy regularization coefficient, 'auto'
                 # action_noise=NormalActionNoise(0.0, 0.1),
                 stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
