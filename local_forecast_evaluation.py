@@ -83,9 +83,9 @@ def evaluate(config):
     forecast_quailty_scores = []
 
     collect_data = False
-    evaluate_forecaster = False
-    # forecaster = SolarGenerationForecaster()
-    forecaster = TemperatureForecaster()
+    evaluate_forecaster = True
+    forecaster = SolarGenerationForecaster()
+    # forecaster = TemperatureForecaster()
     X = []
     y = []
     error = []
@@ -134,13 +134,14 @@ def evaluate(config):
             actions = np.zeros((1, len(env.buildings) * 3))
 
             if evaluate_forecaster:
-                prediction = forecaster.forecast(observations)
+                prediction = forecaster.forecast(observations, 2.4) * 2.4
 
             observations, _, done, _ = env.step(actions)
 
             if evaluate_forecaster:
-                target = observations[0][2]
-                error.append(np.abs(prediction - target))
+                # target_temperature = observations[0][2]
+                target_solar = observations[0][17]
+                error.append(np.abs(prediction - target_solar))
                 # print('target', target, 'prediction', prediction)
 
             if collect_data:

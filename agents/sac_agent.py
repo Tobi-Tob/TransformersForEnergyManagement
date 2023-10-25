@@ -17,6 +17,7 @@ class SACAgent(Agent):
         super().__init__(env, **kwargs)
         self.mode = mode
         self.save_observations = save_observations
+        self.current_timestep = 0
         self.models = []
         if mode in ['switch', 'ensemble']:
             model_id = 'SAC_1'
@@ -61,13 +62,14 @@ class SACAgent(Agent):
     def register_reset(self, observations):
         """ Register reset needs the first set of actions after reset """
         self.reset()
+        self.current_timestep = 0
         for forecaster in self.forecaster.values():
             forecaster.reset()
 
         return self.predict(observations)
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
-        obs_modified = modify_obs(observations, self.forecaster, self.building_metadata)
+        obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)
         actions = []
         for i in range(len(obs_modified)):
             if self.mode is 'ensemble':
@@ -86,10 +88,12 @@ class SACAgent(Agent):
             if self.save_observations:
                 self.all_observations.append(obs_modified[i])
 
+        self.current_timestep += 1
+
         return modify_action(actions, self.building_metadata)
 
     def predict_obs_value(self, observations):
-        obs_modified = modify_obs(observations, self.forecaster, self.building_metadata)
+        obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)
         obs_value = 0
         for obs in obs_modified:
             obs_t = obs_as_tensor(np.array(obs).reshape(1, -1), self.models[0].device)

@@ -214,9 +214,9 @@ class CustomCallback(BaseCallback):
                 action_sum += np.abs(np.array(actions[0]))
                 t += 1
 
-                if t == 400:
-                    value_estimate_t400 = eval_agent.predict_obs_value(observations)
-                    self.logger.record("train/value_estimate_t400", value_estimate_t400)
+                if t == 700:
+                    value_estimate_t700 = eval_agent.predict_obs_value(observations)
+                    self.logger.record("train/value_estimate_t700", value_estimate_t700)
 
                 if not done:
                     actions = eval_agent.predict(observations)
@@ -225,11 +225,13 @@ class CustomCallback(BaseCallback):
                     break
 
             eval_score = metrics_df['average_score']['value']
+            discomfort_proportion = metrics_df['discomfort_proportion']['value']
             mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * eval_env.episode_time_steps)
             mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * eval_env.episode_time_steps)
             mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * eval_env.episode_time_steps)
 
             self.logger.record("rollout/validation_score", eval_score)
+            self.logger.record("rollout/discomfort_proportion", discomfort_proportion)
             self.logger.record("rollout/validation_reward", J)
             self.logger.record("train/mean_dhw_storage_action", mean_dhw_storage_action)
             self.logger.record("train/mean_electrical_storage_action", mean_electrical_storage_action)

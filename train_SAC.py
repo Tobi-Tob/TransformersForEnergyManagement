@@ -7,6 +7,7 @@ from env_wrapper import CityEnvForTraining
 from stable_baselines3 import SAC
 
 from rewards.temp_diff_reward import TempDiffReward
+from rewards.weighted_reward import WeightedRewardFunction
 from utils import init_environment, CustomCallback
 
 
@@ -15,7 +16,7 @@ def train():
     parser.add_argument("--id", type=str, default=None)
     args = parser.parse_args()
     # Model name
-    model_id = 4 if args.id is None else args.id
+    model_id = 'test' if args.id is None else args.id
     model_id = "SAC_" + str(model_id)
     model_dir = f"my_models/{model_id}"
     log_dir = f"logs/" + datetime.datetime.now().strftime("%m%d")
@@ -29,11 +30,11 @@ def train():
     buffer_size = 100_000
     batch_size = 256
 
-    total_timesteps = 100_000  # total timesteps to run in the environment
+    total_timesteps = 18_700  # total timesteps to run in the environment
     eval_interval = 1438  # doing a validation run in the complete env
     save_interval = 1438  # save model every n timesteps
 
-    for i in [1]:
+    for i in [1]:  # list of validation buildings
         # Initialize the training environment
         training_buildings = [1, 2, 3]
         training_buildings.remove(i)
@@ -67,7 +68,7 @@ def train():
 
         # Train the agent
         agent.learn(total_timesteps=total_timesteps, callback=[custom_callback, checkpoint_callback], log_interval=1,
-                    tb_log_name=model_sub_id, reset_num_timesteps=False, progress_bar=True)
+                    tb_log_name=model_sub_id, reset_num_timesteps=True, progress_bar=True)
 
         agent.save(f"{model_dir}/{sub_id}_complete")
 

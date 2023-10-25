@@ -17,7 +17,6 @@ class SolarGenerationForecaster:
         self.scaler = load('my_models/Forecaster/solar_obs_scaler.bin')
         self.input_dim = 7
         self.epsilon_clip = 8e-3  # clip predictions smaller than epsilon to 0
-        self._pv_nominal_power = 2.4  # value of building 1 which was used for training
         self._diffuse_solar_irradiance_predictions = np.full(6, np.nan)
         self._direct_solar_irradiance_predictions = np.full(6, np.nan)
 
@@ -28,12 +27,13 @@ class SolarGenerationForecaster:
         self._diffuse_solar_irradiance_predictions = np.full(6, np.nan)
         self._direct_solar_irradiance_predictions = np.full(6, np.nan)
 
-    def forecast(self, observation):
+    def forecast(self, observation, pv_nominal_power_building_0):
         """
+        Input observations and the first buildings pv nominal power.
         Returns normalized solar generation of next time step given the weather.
         Prediction has to be multiplied by the PV nominal power of the building to be adequate.
         """
-        X = self.modify_obs(observation)
+        X = self.modify_obs(observation, pv_nominal_power_building_0)
         X = torch.tensor(self.scaler.transform(X), dtype=torch.float32)
         next_solar_prediction = self.model(X).detach().numpy()[0][0]
         if next_solar_prediction < self.epsilon_clip:
@@ -41,7 +41,7 @@ class SolarGenerationForecaster:
 
         return next_solar_prediction
 
-    def modify_obs(self, obs: List[List[float]]) -> np.array:
+    def modify_obs(self, obs: List[List[float]], pv_nominal_power_building_0) -> np.array:
         """
         Input: (1,52), Output: (7)
         Modify the observation space to:
@@ -60,7 +60,7 @@ class SolarGenerationForecaster:
         diffuse_solar_6h = obs[7]
         direct_solar = obs[10]
         direct_solar_6h = obs[11]
-        building_solar_generation = obs[17] / self._pv_nominal_power  # TODO specific buildings nominal power
+        building_solar_generation = obs[17] / pv_nominal_power_building_0
 
         # update prediction history
         self._diffuse_solar_irradiance_predictions[0:5] = self._diffuse_solar_irradiance_predictions[1:6]
