@@ -1,4 +1,4 @@
-CityLearn==2.1b9
+CityLearn==2.1b12
 numpy
 stable_baselines3[extra]
 torch

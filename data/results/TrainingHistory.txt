@@ -188,21 +188,41 @@ SAC_all_temp_5752.zip
 ====>  Score:             0.6496677916887195
 Number of episodes with power outage: 5 / 18
 
-======================= Completed: 26.10.2023 01:46:29 =======================
+======================= Completed: 26.10.2023 12:14:13 =======================
 {'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 4314, 'learning_rate': 0.0003} TempDiffReward
-Total agent time: 19.49s
-SAC_all_temp_4314.zip
-0.1    Carbon emissions   0.992
-0.3    Unmet hours        0.0955
-0.075  Ramping            1.2271
-0.075  Load factor        1.0135
-0.075  Daily peak         0.9597
-0.075  All-time peak      0.9578
-0.15   Thermal resilience 0.446
-0.15   Unserved energy    0.5465
-====>  Score:             0.5885894193496735
-Number of episodes with power outage: 5 / 9
+Total agent time: 70.43s
+SAC_all_temp_4314.zip              Submission:
+0.1    Carbon emissions   0.9934 - 1.0626
+0.3    Unmet hours        0.0960 - 0.0816
+0.075  Ramping            1.2235 - 1.2500
+0.075  Load factor        1.0160 - 0.9750
+0.075  Daily peak         0.9627 - 0.9702
+0.075  All-time peak      0.9519 - 1.0169
+0.15   Thermal resilience 0.3760 - 0.5565
+0.15   Unserved energy    0.5817 - 0.6688
+====>  Score:             0.5833909043267547 - 0.6304
+Number of episodes with power outage: 24 / 60
 
-Process finished with exit code 0
+======================= Completed: 26.10.2023 15:18:12 =======================
+{'model_id': 'SAC', 'mode': 'single', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 4314, 'learning_rate': 0.0003} TempDiffReward
+Total agent time: 31.21s
+SAC2_all_temp_4314.zip (SAC2_all_temp)
+0.1    Carbon emissions   0.9776
+0.3    Unmet hours        0.0916
+0.075  Ramping            1.2312
+0.075  Load factor        1.065
+0.075  Daily peak         1.0298
+0.075  All-time peak      0.9211
+0.15   Thermal resilience 0.3948
+0.15   Unserved energy    0.4753
+====>  Score:             0.5742714156354176
+Number of episodes with power outage: 24 / 60
+
+
+
+
+
+
+
 
 

@@ -13,14 +13,17 @@ class TempDiffReward(RewardFunction):
         indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
         indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
         temperature_diff = np.abs(indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point)
+        power_outage = np.array([o['power_outage'] for o in observations])
 
-        comfort_cost = []
+        cost = []
         for i in range(len(observations)):
-            cost = -np.clip(temperature_diff[i] - 1, a_min=0, a_max=np.inf)  # linear also promising
-            # cost = -temperature_diff[i]
-            comfort_cost.append(cost)
+            unmet_hours_cost = -np.clip(temperature_diff[i] - 1, a_min=0, a_max=np.inf)
+            # unmet_cost = -temperature_diff[i] # linear also promising
+            # thermal_resilience_cost = -temperature_diff[i]+1 if power_outage[i] == 1 else 0  # does not benefit thermal resilience
 
-        return comfort_cost
+            cost.append(unmet_hours_cost)
+
+        return cost
 
     def reset(self):
         pass
