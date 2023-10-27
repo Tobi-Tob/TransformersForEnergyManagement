@@ -65,7 +65,7 @@ class UnservedEnergyReward(RewardFunction):
 
     def calculate(self, observations):
         """
-        Funktion 1
+        Funktion 2 (increased power outage probability)
         """
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']
@@ -88,6 +88,7 @@ class UnservedEnergyReward(RewardFunction):
         reward = []
 
         for i in range(num_buildings):
+            # full_sorage_bonus = 0.05 * (electrical_storage[i] + dhw_storage[i])
             unserved_energy_cost = 0
             if power_outage[i] > 0:
                 building_metadata = self.env_metadata['buildings'][i]
@@ -107,11 +108,10 @@ class UnservedEnergyReward(RewardFunction):
                 # TODO vllt reward signal von solar_generation loesen
                 unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf)  # TODO /expected_energy, vllt ohne clip?
 
-            reward.append(unserved_energy_cost)
+            reward.append(unserved_energy_cost)  # + full_sorage_bonus)
 
         self.previous_electrical_storage = electrical_storage
         self.previous_dhw_storage = dhw_storage
-
         return reward
 
     def reset(self):

@@ -33,7 +33,7 @@ def train():
 
     total_timesteps = 20_000  # total timesteps to run in the environment
     eval_interval = 1438  # how frequent to do a validation run in the complete environment
-    n_eval_episodes = 3  # do n episodes for each validation run
+    n_eval_episodes = 1  # do n episodes for each validation run
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 

@@ -207,16 +207,18 @@ Number of episodes with power outage: 24 / 60
 {'model_id': 'SAC', 'mode': 'single', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 4314, 'learning_rate': 0.0003} TempDiffReward
 Total agent time: 31.21s
 SAC2_all_temp_4314.zip (SAC2_all_temp)
-0.1    Carbon emissions   0.9776
-0.3    Unmet hours        0.0916
-0.075  Ramping            1.2312
-0.075  Load factor        1.065
-0.075  Daily peak         1.0298
-0.075  All-time peak      0.9211
-0.15   Thermal resilience 0.3948
-0.15   Unserved energy    0.4753
-====>  Score:             0.5742714156354176
+0.1    Carbon emissions   0.9776 - 1.0691
+0.3    Unmet hours        0.0916 - 0.1088
+0.075  Ramping            1.2312 - 1.2126
+0.075  Load factor        1.0650 - 1.0509
+0.075  Daily peak         1.0298 - 1.0806
+0.075  All-time peak      0.9211 - 1.0909
+0.15   Thermal resilience 0.3948 - 0.7341
+0.15   Unserved energy    0.4753 - 0.6914
+====>  Score:             0.5742714156354176 - 0.6860
 Number of episodes with power outage: 24 / 60
+
+
 
 
 
