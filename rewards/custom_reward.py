@@ -64,6 +64,9 @@ class UnservedEnergyReward(RewardFunction):
         self.previous_dhw_storage = None
 
     def calculate(self, observations):
+        """
+        Funktion 1
+        """
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']
         if self.current_time_step >= self.simulation_time_steps:

@@ -6,7 +6,7 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from env_wrapper import CityEnvForTraining
 from stable_baselines3 import SAC
 
-from rewards.temp_diff_reward import TempDiffReward
+from rewards.custom_reward import UnservedEnergyReward, TempDiffReward
 from rewards.weighted_reward import WeightedRewardFunction
 from utils import init_environment, CustomCallback
 
@@ -42,7 +42,7 @@ def train():
     if buildings_to_remove is not 0:
         training_buildings.remove(buildings_to_remove)
 
-    env = init_environment(training_buildings, [0, 719], reward_function=TempDiffReward)
+    env = init_environment(training_buildings, [0, 719], reward_function=UnservedEnergyReward)
     env = CityEnvForTraining(env)  # Environment only for training
     env.reset()
 
