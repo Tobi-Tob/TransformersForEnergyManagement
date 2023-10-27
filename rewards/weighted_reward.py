@@ -63,7 +63,6 @@ class WeightedRewardFunction(RewardFunction):
         else:
             all_time_peak_cost = 0
 
-        # TODO Unserved energy (proportion of unmet demand due to supply shortage)
         self.current_time_step += 1
         return [0.3*discomfort_cost + 0.1*carbon_emissions_cost
                 + 0.075*(ramping_cost + load_factor_cost + daily_peak_cost + all_time_peak_cost) + 0.3*thermal_resilience_cost]

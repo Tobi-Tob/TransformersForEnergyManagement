@@ -56,7 +56,7 @@ obs_mapping = {
 
 
 def print_interactions(action, reward, next_observation):
-    do_print = False
+    do_print = True
     if do_print:
         def get_act(str_act):
             data = [action[0][i] for i in act_mapping[str_act]]
@@ -66,11 +66,12 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
+        # print(reward, "dhw_demand")
         if get_obs('power_outage')[0] == 1:
-            print(get_obs('day_type'), get_obs('hour'), get_obs('power_outage'))
-            print(get_act("cooling_device_action"), "cooling_device_action")
-            print(reward, "reward")
-            print(get_obs('indoor_dry_bulb_temperature'), get_obs('indoor_dry_bulb_temperature_set_point'))
+            print(get_obs('day_type'), get_obs('hour'), 'outage:', get_obs('power_outage'))
+            #print(get_act("cooling_device_action"), "cooling_device_action")
+            #print(reward, "reward")
+            #print(get_obs('indoor_dry_bulb_temperature'), get_obs('indoor_dry_bulb_temperature_set_point'))
 
 
 def print_metrics(episode_metrics):

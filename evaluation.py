@@ -76,7 +76,7 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    model = SAC.load("my_models/submission_models/SAC2_all_4314.zip")
+    model = SAC.load("my_models/submission_models/SAC2_all_temp_4314.zip")
     agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
     # agent = SACAgent(wrapper_env, mode='submission')
 
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     class Config:
         data_dir = './data/'
         SCHEMA = os.path.join(data_dir, 'schemas/warm_up/schema.json')
-        num_episodes = 60
+        num_episodes = 1
 
         # Power outage probability:
         # p(outage|day) = 0.393% (modified to 1.97%)
