@@ -65,7 +65,7 @@ class UnservedEnergyReward(RewardFunction):
 
     def calculate(self, observations):
         """
-        Funktion 4 (/expected_energy)
+        Funktion 5 (higher outage (157), lower lr (3e-5))
         """
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']

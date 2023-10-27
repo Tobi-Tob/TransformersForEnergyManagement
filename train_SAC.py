@@ -23,7 +23,7 @@ def train():
 
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
-    learning_rate = 3e-4  # good between 3e-4 and 3e-3
+    learning_rate = 3e-5  # good between 3e-4 and 3e-3
     pi_network = [256, 256]
     q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
