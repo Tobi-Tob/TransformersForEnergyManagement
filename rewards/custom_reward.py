@@ -65,7 +65,7 @@ class UnservedEnergyReward(RewardFunction):
 
     def calculate(self, observations):
         """
-        Funktion 6 no clip
+        Funktion 7 if expected_energy > 1
         """
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']
@@ -101,11 +101,14 @@ class UnservedEnergyReward(RewardFunction):
                                                           * ec * e_efficiency, decimals=4)
                 energy_from_dhw_storage = np.round(((1 - dhw_loss_coef) * self.previous_dhw_storage[i] - dhw_storage[i]) * dc, decimals=4)
 
-                expected_energy = cooling_demand[i] + dhw_demand[i] + non_shiftable_load[i]
-                served_energy = energy_from_electrical_storage + energy_from_dhw_storage + solar_generation[i]  # info vllt als feature?
-                # TODO vllt reward signal von solar_generation loesen
-                unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf)/expected_energy
+                expected_energy = cooling_demand[i] + dhw_demand[i] + non_shiftable_load[i] - solar_generation[i]
+                served_energy_from_storage = energy_from_electrical_storage + energy_from_dhw_storage  # info vllt als feature?
+                unserved_energy = np.clip(expected_energy - served_energy_from_storage, a_min=0, a_max=np.inf)
 
+                if expected_energy > 1:
+                    unserved_energy_cost = -(unserved_energy / expected_energy)
+                else:
+                    unserved_energy_cost = -unserved_energy
             reward.append(unserved_energy_cost)
 
         self.previous_electrical_storage = electrical_storage

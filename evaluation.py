@@ -76,7 +76,7 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    model = SAC.load("my_models/SAC_uer5/m0_2876_steps.zip")
+    model = SAC.load("my_models/submission_models/SAC_all_temp_4314.zip")
     agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
     # agent = SACAgent(wrapper_env, mode='submission')
 
