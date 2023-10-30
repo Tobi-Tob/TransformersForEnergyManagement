@@ -65,7 +65,7 @@ class UnservedEnergyReward(RewardFunction):
 
     def calculate(self, observations):
         """
-        Funktion 7 if expected_energy > 1
+        Funktion 7 if expected_energy > 0
         """
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']
@@ -105,7 +105,7 @@ class UnservedEnergyReward(RewardFunction):
                 served_energy_from_storage = energy_from_electrical_storage + energy_from_dhw_storage  # info vllt als feature?
                 unserved_energy = np.clip(expected_energy - served_energy_from_storage, a_min=0, a_max=np.inf)
 
-                if expected_energy > 1:
+                if expected_energy > 0:
                     unserved_energy_cost = -(unserved_energy / expected_energy)
                 else:
                     unserved_energy_cost = -unserved_energy
