@@ -106,17 +106,17 @@ class CombinedReward(RewardFunction):
 
     def _get_grid_reward(self, observations):
         """
-        Version 1 district
+        Version 2 single
         """
-        net_electricity_consumption = np.array([o['net_electricity_consumption'] for o in observations])
-        district_electricity_consumption = np.sum(net_electricity_consumption)
-        self.electricity_consumption_history.append(district_electricity_consumption)
-        self.district_electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
+        net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
+        # district_electricity_consumption = sum(net_electricity_consumption)
+        self.electricity_consumption_history.append(net_electricity_consumption)
+        self.electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
 
         reward = []
         for i in range(len(observations)):
             try:
-                ramping_cost = -np.abs(district_electricity_consumption - self.district_electricity_consumption_history[-2]) / len(observations)
+                ramping_cost = -np.abs(net_electricity_consumption[i] - self.electricity_consumption_history[-2][i])
             except IndexError:
                 ramping_cost = 0
             reward.append(ramping_cost)
