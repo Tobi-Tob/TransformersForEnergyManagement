@@ -68,7 +68,7 @@ def print_interactions(action, reward, next_observation):
 
         # print(reward, "dhw_demand")
         if get_obs('power_outage')[0] == 1:
-            #print(get_act("cooling_device_action"), "cooling_device_action")
+            # print(get_act("cooling_device_action"), "cooling_device_action")
             print(reward, "reward")
             print(get_obs('day_type'), get_obs('hour'), 'outage:', get_obs('power_outage'))
             print(get_obs('dhw_storage_soc'), get_obs('electrical_storage_soc'))
@@ -178,7 +178,7 @@ class CustomCallback(BaseCallback):
         :return: (bool) If the callback returns False, training is aborted early.
         """
 
-        if self.n_calls % self.eval_interval == 0 and self.n_calls > 719*3:  # call every n steps and perform evaluation
+        if self.n_calls % self.eval_interval == 0 and self.n_calls > 719 * 3:  # call every n steps and perform evaluation
             seed = 73055  # seed 1
             for b in self.eval_env.buildings:
                 b.stochastic_power_outage_model.random_seed = seed
@@ -210,19 +210,21 @@ class CustomCallback(BaseCallback):
                     episodes_completed += 1
                     metrics_df = self.eval_env.evaluate_citylearn_challenge()
                     episode_metrics.append(metrics_df)
-                    print(f"Evaluation Episodes complete: {episodes_completed} | J: {np.round(J/episodes_completed, decimals=2)} | "
+                    print(f"Evaluation Episodes complete: {episodes_completed} | running J: {np.round(J / episodes_completed, decimals=2)} | "
                           f"{metrics_df}")
 
                     if episodes_completed == 1:
-                        seed = 41000  # seed 2
+                        seed = 1  # seed 2
                     elif episodes_completed == 2:
-                        seed = 13700  # seed 3
+                        seed = 41000  # seed 3
                     elif episodes_completed == 3:
-                        seed = 1404  # seed 4
+                        seed = 13700  # seed 4
                     elif episodes_completed == 4:
-                        seed = 5000  # seed 5
+                        seed = 1404  # seed 5
+                    elif episodes_completed == 5:
+                        seed = 5000  # seed 6
                     else:
-                        seed = randint(0, 99999)  # seed >= 6 is random
+                        seed = randint(0, 99999)  # seed >= 7 is random
                     for b in self.eval_env.buildings:
                         b.stochastic_power_outage_model.random_seed = seed
 
@@ -232,40 +234,32 @@ class CustomCallback(BaseCallback):
                 if episodes_completed >= self.n_eval_episodes:
                     break
 
-            eval_score = 0
-            carbon_emissions = 0
-            discomfort = 0
-            ramping = 0
-            load_factor = 0
-            daily_peak = 0
-            annual_peak = 0
-            thermal_resilience = 0
-            unserved_energy = 0
-            for metric in episode_metrics:
-                eval_score += metric['average_score']['value']
-                carbon_emissions += metric['carbon_emissions_total']['value']
-                discomfort += metric['discomfort_proportion']['value']
-                ramping += metric['ramping_average']['value']
-                load_factor += metric['daily_one_minus_load_factor_average']['value']
-                daily_peak += metric['daily_peak_average']['value']
-                annual_peak += metric['annual_peak_average']['value']
-                thermal_resilience += metric['one_minus_thermal_resilience_proportion']['value']
-                unserved_energy += metric['power_outage_normalized_unserved_energy_total']['value']
+            carbon_emissions = np.nanmean([m['carbon_emissions_total']['value'] for m in episode_metrics])
+            discomfort = np.nanmean([m['discomfort_proportion']['value'] for m in episode_metrics])
+            ramping = np.nanmean([m['ramping_average']['value'] for m in episode_metrics])
+            load_factor = np.nanmean([m['daily_one_minus_load_factor_average']['value'] for m in episode_metrics])
+            daily_peak = np.nanmean([m['daily_peak_average']['value'] for m in episode_metrics])
+            annual_peak = np.nanmean([m['annual_peak_average']['value'] for m in episode_metrics])
+            thermal_resilience = np.nanmean([m['one_minus_thermal_resilience_proportion']['value'] for m in episode_metrics])
+            unserved_energy = np.nanmean([m['power_outage_normalized_unserved_energy_total']['value'] for m in episode_metrics])
+            eval_score = 0.1 * carbon_emissions + 0.3 * discomfort + 0.075 * ramping + 0.075 * load_factor + 0.075 * daily_peak + \
+                         0.075 * annual_peak + 0.15 * thermal_resilience + 0.15 * unserved_energy
+
             mean_dhw_storage_action = (action_sum[0] + action_sum[3] + action_sum[6]) / (3 * self.eval_env.episode_time_steps)
             mean_electrical_storage_action = (action_sum[1] + action_sum[4] + action_sum[7]) / (3 * self.eval_env.episode_time_steps)
             mean_cooling_device_action = (action_sum[2] + action_sum[5] + action_sum[8]) / (3 * self.eval_env.episode_time_steps)
 
-            self.logger.record("rollout/validation_score", eval_score / self.n_eval_episodes)
+            self.logger.record("rollout/validation_score", eval_score)
             self.logger.record("rollout/validation_reward", J / self.n_eval_episodes)
 
-            self.logger.record("metric/1_carbon_emissions", carbon_emissions / self.n_eval_episodes)
-            self.logger.record("metric/2_discomfort", discomfort / self.n_eval_episodes)
-            self.logger.record("metric/3_ramping", ramping / self.n_eval_episodes)
-            self.logger.record("metric/4_load_factor", load_factor / self.n_eval_episodes)
-            self.logger.record("metric/5_daily_peak", daily_peak / self.n_eval_episodes)
-            self.logger.record("metric/6_annual_peak", annual_peak / self.n_eval_episodes)
-            self.logger.record("metric/7_thermal_resilience", thermal_resilience / self.n_eval_episodes)
-            self.logger.record("metric/8_unserved_energy", unserved_energy / self.n_eval_episodes)
+            self.logger.record("metric/1_carbon_emissions", carbon_emissions)
+            self.logger.record("metric/2_discomfort", discomfort)
+            self.logger.record("metric/3_ramping", ramping)
+            self.logger.record("metric/4_load_factor", load_factor)
+            self.logger.record("metric/5_daily_peak", daily_peak)
+            self.logger.record("metric/6_annual_peak", annual_peak)
+            self.logger.record("metric/7_thermal_resilience", thermal_resilience)
+            self.logger.record("metric/8_unserved_energy", unserved_energy)
 
             self.logger.record("train/mean_dhw_storage_action", mean_dhw_storage_action / self.n_eval_episodes)
             self.logger.record("train/mean_electrical_storage_action", mean_electrical_storage_action / self.n_eval_episodes)
