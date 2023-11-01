@@ -32,6 +32,9 @@ class CombinedReward(RewardFunction):
         return grid_reward
 
     def _get_temp_diff_reward(self, observations):
+        """
+        Best 2_discomfort: 0.1, 8_unserved_energy: 0.5, 7_thermal_resilience: 0.45 (all in combination with unserved_energy_reward)
+        """
         indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
         indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
         temperature_diff = np.abs(indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point)
@@ -50,6 +53,8 @@ class CombinedReward(RewardFunction):
     def _get_unserved_energy_reward(self, observations):
         """
         Funktion 4
+        Seems not to be relevant
+        Best 8_unserved_energy: 0.65 (worse than with emission_reward)
         """
         if self.previous_electrical_storage is None:
             self.previous_electrical_storage = [o['electrical_storage_soc'] for o in observations]
@@ -96,6 +101,7 @@ class CombinedReward(RewardFunction):
     def _get_emission_reward(self, observations):
         """
         Version 6 clip, single, shared obs
+        Best 1_carbon_emission: 0.55, best 8_unserved energy: 0.45 (high variance)
         """
         emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
         reward = []
@@ -106,7 +112,7 @@ class CombinedReward(RewardFunction):
 
     def _get_grid_reward(self, observations):
         """
-        Version 2 single
+        Version 2 single best 3_ramping: 0.8 (starts at 0.8 and did not learn further)
         """
         net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
         # district_electricity_consumption = sum(net_electricity_consumption)
