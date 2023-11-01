@@ -17,16 +17,21 @@ class CombinedReward(RewardFunction):
         self.max_electricity_consumption = 0
 
     def calculate(self, observations):
-        # temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
-        # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
-        emission_reward = np.array(self._get_emission_reward(observations))
-
-        return emission_reward
-
-    def _get_temp_diff_reward(self, observations):
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
+        if self.simulation_time_steps is None:
+            self.simulation_time_steps = self.env_metadata['simulation_time_steps']
+        if self.current_time_step >= self.simulation_time_steps:
+            self.reset()
 
+        # temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
+        # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
+        # emission_reward = np.array(self._get_emission_reward(observations))
+        grid_reward = np.array(self._get_grid_reward(observations))
+
+        return grid_reward
+
+    def _get_temp_diff_reward(self, observations):
         indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
         indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
         temperature_diff = np.abs(indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point)
@@ -46,10 +51,6 @@ class CombinedReward(RewardFunction):
         """
         Funktion 4
         """
-        if self.simulation_time_steps is None:
-            self.simulation_time_steps = self.env_metadata['simulation_time_steps']
-        if self.current_time_step >= self.simulation_time_steps:
-            self.reset()
         if self.previous_electrical_storage is None:
             self.previous_electrical_storage = [o['electrical_storage_soc'] for o in observations]
         if self.previous_dhw_storage is None:
@@ -103,15 +104,22 @@ class CombinedReward(RewardFunction):
             reward.append(emission_cost)
         return reward
 
-    def _get_ramping_reward(self, observations):
-        net_el_con_con = [o['net_electricity_consumption'] for o in observations]
-        ramp_controlled = abs(np.array(net_el_con_con) - self.net_el_con_old)
-        ramp_controlled = ramp_controlled * -1
-        self.net_el_con_old = np.array(net_el_con_con)
-        if self.central_agent:
-            reward = [min(ramp_controlled)]
-        else:
-            reward = [ramp_controlled]
+    def _get_grid_reward(self, observations):
+        """
+        Version 1 district
+        """
+        net_electricity_consumption = np.array([o['net_electricity_consumption'] for o in observations])
+        district_electricity_consumption = np.sum(net_electricity_consumption)
+        self.electricity_consumption_history.append(district_electricity_consumption)
+        self.district_electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
+
+        reward = []
+        for i in range(len(observations)):
+            try:
+                ramping_cost = -np.abs(district_electricity_consumption - self.district_electricity_consumption_history[-2]) / len(observations)
+            except IndexError:
+                ramping_cost = 0
+            reward.append(ramping_cost)
         return reward
 
     def reset(self):

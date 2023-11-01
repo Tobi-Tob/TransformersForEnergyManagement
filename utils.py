@@ -66,12 +66,16 @@ def print_interactions(action, reward, next_observation):
             data = [next_observation[0][i] for i in obs_mapping[str_obs]]
             return data
 
-        # print(reward, "dhw_demand")
+        print(reward, "ramping_cost")
+        print(get_obs('net_electricity_consumption'))
+        print()
+
         if get_obs('power_outage')[0] == 1:
+            pass
             # print(get_act("cooling_device_action"), "cooling_device_action")
-            print(reward, "reward")
-            print(get_obs('day_type'), get_obs('hour'), 'outage:', get_obs('power_outage'))
-            print(get_obs('dhw_storage_soc'), get_obs('electrical_storage_soc'))
+            # print(reward, "reward")
+            # print(get_obs('day_type'), get_obs('hour'), 'outage:', get_obs('power_outage'))
+            # print(get_obs('dhw_storage_soc'), get_obs('electrical_storage_soc'))
 
 
 def print_metrics(episode_metrics):
