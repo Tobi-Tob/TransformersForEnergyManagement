@@ -27,11 +27,11 @@ def train():
     pi_network = [256, 256]
     q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
-    buffer_size = 20_000
+    buffer_size = 10_000
     batch_size = 720
     gamma = 1
 
-    total_timesteps = 20_000  # total timesteps to run in the environment
+    total_timesteps = 30_000  # total timesteps to run in the environment
     eval_interval = 1438  # how frequent to do a validation run in the complete environment
     n_eval_episodes = 1  # do n episodes for each validation run
     save_interval = 1438  # save model every n timesteps
@@ -52,7 +52,7 @@ def train():
                 env=env,
                 learning_rate=learning_rate,
                 buffer_size=buffer_size,
-                learning_starts=719 * len(training_buildings),
+                learning_starts=719,
                 batch_size=batch_size,
                 tau=0.005,  # soft update coefficient
                 gamma=gamma,
