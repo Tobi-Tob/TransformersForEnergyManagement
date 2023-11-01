@@ -94,12 +94,12 @@ class CombinedReward(RewardFunction):
 
     def _get_emission_reward(self, observations):
         """
-        Version 5 clip, district, shared obs
+        Version 6 clip, single, shared obs
         """
         emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
         reward = []
         for i in range(len(observations)):
-            emission_cost = -np.clip(sum(emissions), a_min=0, a_max=np.inf)/len(observations)
+            emission_cost = -np.clip(emissions[i], a_min=0, a_max=np.inf)
             reward.append(emission_cost)
         return reward
 
