@@ -94,16 +94,13 @@ class CombinedReward(RewardFunction):
 
     def _get_emission_reward(self, observations):
         """
-        Version 3 no clip
+        Version 4 clip district
         """
         emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
         reward = []
         for i in range(len(observations)):
-            # emission_cost = -np.clip(emissions[i], a_min=0, a_max=np.inf)
-            emission_cost = -emissions[i]
+            emission_cost = -np.clip(sum(emissions), a_min=0, a_max=np.inf)
             reward.append(emission_cost)
-            # TODO clip < 0?
-            # TODO district level?
         return reward
 
     def _get_ramping_reward(self, observations):
