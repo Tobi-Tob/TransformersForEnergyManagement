@@ -6,20 +6,24 @@ class CombinedReward(RewardFunction):
     """
     Version 5
     """
+
     def __init__(self, env_metadata):
         super().__init__(env_metadata)
         self.current_time_step = 1
         self.simulation_time_steps = None
         self.previous_electrical_storage = None
         self.previous_dhw_storage = None
+        self.electricity_consumption_history = []
+        self.max_electricity_consumption = 0
 
     def calculate(self, observations):
-        reward1 = np.array(self._calculate_TempDiffReward(observations))
-        reward2 = np.array(self._calculate_UnservedEnergyReward(observations))
+        # temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
+        # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
+        emission_reward = np.array(self._get_emission_reward(observations))
 
-        return reward1 + reward2
+        return emission_reward
 
-    def _calculate_TempDiffReward(self, observations):
+    def _get_temp_diff_reward(self, observations):
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
 
@@ -38,7 +42,7 @@ class CombinedReward(RewardFunction):
 
         return reward
 
-    def _calculate_UnservedEnergyReward(self, observations):
+    def _get_unserved_energy_reward(self, observations):
         """
         Funktion 4
         """
@@ -80,7 +84,7 @@ class CombinedReward(RewardFunction):
                 expected_energy = cooling_demand[i] + dhw_demand[i] + non_shiftable_load[i]
                 served_energy = energy_from_electrical_storage + energy_from_dhw_storage + solar_generation[i]  # info vllt als feature?
 
-                unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf)/expected_energy
+                unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf) / expected_energy
 
             reward.append(unserved_energy_cost)
 
@@ -88,18 +92,37 @@ class CombinedReward(RewardFunction):
         self.previous_dhw_storage = dhw_storage
         return reward
 
+    def _get_emission_reward(self, observations):
+        """
+        Version 1 clip
+        """
+        emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
+        reward = []
+        for i in range(len(observations)):
+            emission_cost = -np.clip(emissions[i], a_min=0, a_max=np.inf)
+            reward.append(emission_cost)
+            # TODO clip < 0?
+            # TODO district level?
+        return reward
+
+    def _get_ramping_reward(self, observations):
+        net_el_con_con = [o['net_electricity_consumption'] for o in observations]
+        ramp_controlled = abs(np.array(net_el_con_con) - self.net_el_con_old)
+        ramp_controlled = ramp_controlled * -1
+        self.net_el_con_old = np.array(net_el_con_con)
+        if self.central_agent:
+            reward = [min(ramp_controlled)]
+        else:
+            reward = [ramp_controlled]
+        return reward
+
     def reset(self):
-        self._reset_TempDiffReward()
-        self._reset_UnservedEnergyReward()
-
-    def _reset_TempDiffReward(self):
-        pass
-
-    def _reset_UnservedEnergyReward(self):
         self.current_time_step = 1
         self.simulation_time_steps = None
         self.previous_electrical_storage = None
         self.previous_dhw_storage = None
+        self.electricity_consumption_history = []
+        self.max_electricity_consumption = 0
 
 
 class TempDiffReward(RewardFunction):
@@ -179,7 +202,7 @@ class UnservedEnergyReward(RewardFunction):
                 expected_energy = cooling_demand[i] + dhw_demand[i] + non_shiftable_load[i]
                 served_energy = energy_from_electrical_storage + energy_from_dhw_storage + solar_generation[i]  # info vllt als feature?
 
-                unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf)/expected_energy
+                unserved_energy_cost = - np.clip(expected_energy - served_energy, a_min=0, a_max=np.inf) / expected_energy
 
             reward.append(unserved_energy_cost)
 

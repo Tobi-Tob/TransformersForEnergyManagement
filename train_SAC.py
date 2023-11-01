@@ -52,7 +52,7 @@ def train():
                 env=env,
                 learning_rate=learning_rate,
                 buffer_size=buffer_size,
-                learning_starts=719,
+                learning_starts=719 * len(training_buildings),
                 batch_size=batch_size,
                 tau=0.005,  # soft update coefficient
                 gamma=gamma,

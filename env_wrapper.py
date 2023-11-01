@@ -215,7 +215,7 @@ class CityEnvForTraining(Env):
         }
 
         self.num_buildings = len(env.buildings)
-        self.active_building_ID = 1
+        self.active_building_ID = 0
         self.current_timestep = 0
         self.action_space = get_modified_action_space()
         self.observation_space = get_modified_observation_space()
