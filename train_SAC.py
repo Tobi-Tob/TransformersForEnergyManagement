@@ -28,7 +28,7 @@ def train():
     q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
     buffer_size = 20_000
-    batch_size = 256
+    batch_size = 720
     gamma = 1
 
     total_timesteps = 20_000  # total timesteps to run in the environment
