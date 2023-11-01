@@ -14,9 +14,10 @@ File to modify the observation and action space and wrap the citylearn environme
 
 def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_timestep) -> List[List[float]]:
     """
-    Input: (1,52), Output: (3, 24)
+    Input: (1,52), Output: (3, 26)
     Modify the observation space to:
-    [[relative_timestep, day_type, hour, outdoor_dry_bulb_temperature, outdoor_temperature_1h_predicted, carbon_intensity,
+    [[relative_timestep, day_type, hour, outdoor_dry_bulb_temperature, outdoor_temperature_1h_predicted,
+    carbon_intensity, mean_district_dhw_storage, mean_district_electrical_storage,
     indoor_dry_bulb_temperature, non_shiftable_load, solar_generation_1h_predicted, dhw_storage_soc,
     electrical_storage_soc, net_electricity_consumption, cooling_demand, dhw_demand, occupant_count,
     indoor_temperature_difference_to_set_point, power_outage, relative_non_shiftable_load,
@@ -25,11 +26,11 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
     """
     #  --> Delete unimportant observations like pricing, 12 and 24 h predictions
     #  --> Add usefully observation e.g. temperature_diff
-    #  --> Pre-process observation with building specific info e.g. pv power, annual non-shiftable load estimate
-    #  x   Include info of other buildings e.g. mean storage level or mean net energy consumption
+    #  --> Pre-process observation with building specific info e.g. pv power, annual non-shiftable load estimate...
+    #  --> Include info of other buildings e.g. mean storage levels
     #  --> Use historic weather forecast information
-    #  --> Use building solar forecaster or building power forecaster
-    #  --> Normalize the observation
+    #  --> Use building solar forecaster, temp forecaster and building power forecaster?
+    #  --> Normalize observations when possible
 
     # Read metadata
     buildings = []
@@ -43,17 +44,21 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
     temperature_1h = forecaster['TemperatureForecaster'].forecast(obs)
 
     obs = obs[0]
-    obs_district = [relative_timestep, obs[0], obs[1], obs[2], temperature_1h, obs[14]]  # all important district level observations (6)
-    obs_buildings = obs[15:21] + obs[25:]  # all remaining building level observations (#buildings * 11)
+    obs_buildings = obs[15:21] + obs[25:]  # all building level observations (#buildings * 11)
 
-    # building-level observations
+    # building-level observations:
     assert len(obs_buildings) % 11 == 0  # 11 observations per building
     obs_single_building = [obs_buildings[i:i + 11] for i in range(0, len(obs_buildings), 11)]
     assert len(obs_single_building) == len(buildings)
+    dhw_storage_sum = 0
+    electrical_storage_sum = 0
     for i, b in enumerate(obs_single_building):
         temperature_diff = b[0] - b[9]  # indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point
         b[9] = temperature_diff  # replace with temperature difference to set point
         b[2] = solar_generation_1h * pv_nominal_powers[i]  # replace with solar generation prediction
+
+        dhw_storage_sum += b[3]  # to calculate mean_district_dhw_storage
+        electrical_storage_sum += b[4]  # to calculate mean_district_electrical_storage
 
         b.append(b[1])  # relative_non_shiftable_load
         b.append(b[2])  # relative_solar_generation_1h_predicted
@@ -65,6 +70,12 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
         # factor is calculated in _get_obs_normalization()
         assert len(b) == 18
 
+    mean_district_dhw_storage = dhw_storage_sum / len(buildings)
+    mean_district_electrical_storage = electrical_storage_sum / len(buildings)
+
+    # all important district level observations: (8)
+    obs_district = [relative_timestep, obs[0], obs[1], obs[2], temperature_1h, obs[14], mean_district_dhw_storage, mean_district_electrical_storage]
+
     obs_modified = []
     normalizations = _get_obs_normalization(metadata)
     for i, b in enumerate(obs_single_building):
@@ -75,7 +86,7 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
 
             obs[j] = (obs[j] - mean) / std
 
-        assert len(obs) == 6 + 18
+        assert len(obs) == 8 + 18
         obs_modified.append(obs)
 
     return obs_modified
@@ -135,6 +146,8 @@ def _get_obs_normalization(metadata):
         [24.2984569, 4.00000000],  # outdoor_dry_bulb_temperature (subtract the mean temp set point, divide by 4)
         [24.2984569, 4.00000000],  # outdoor_temperature_1h_prediction (subtract the mean temp set point)
         [0.45429827, 0.04875349],  # carbon_intensity (normalized)
+        [0.00000000, 1.00000000],  # mean_district_dhw_storage (unchanged)
+        [0.00000000, 1.00000000],  # mean_district_electrical_storage (unchanged)
         [24.2984569, 4.00000000],  # indoor_dry_bulb_temperature (subtract the mean temp set point)
         [0.00000000, 1.00000000],  # non_shiftable_load (unchanged)
         [0.00000000, 1.00000000],  # solar_generation_1h_predicted (unchanged)
@@ -158,7 +171,7 @@ def _get_obs_normalization(metadata):
 
 
 def get_modified_observation_space():
-    observation_dim = 24
+    observation_dim = 26
     low_limit = np.zeros(observation_dim)
     high_limit = np.zeros(observation_dim)
     low_limit[0], high_limit[0] = 0, 1  # relative_timestep
@@ -167,24 +180,26 @@ def get_modified_observation_space():
     low_limit[3], high_limit[3] = -0.73, 4.01  # outdoor_dry_bulb_temperature
     low_limit[4], high_limit[4] = -0.73, 4.01  # outdoor_temperature_1h_prediction
     low_limit[5], high_limit[5] = -2.40, 2.09  # carbon_intensity
-    low_limit[6], high_limit[6] = -5, 5  # indoor_dry_bulb_temperature
-    low_limit[7], high_limit[7] = 0, 8.83  # non_shiftable_load
-    low_limit[8], high_limit[8] = 0, 3  # solar_generation_1h_predicted
-    low_limit[9], high_limit[9] = 0, 2.85  # dhw_storage_soc
-    low_limit[10], high_limit[10] = 0, 4  # electrical_storage_soc
-    low_limit[11], high_limit[11] = -5, 20  # net_electricity_consumption
-    low_limit[12], high_limit[12] = 0, 10  # cooling_demand
-    low_limit[13], high_limit[13] = 0, 10  # dhw_demand
-    low_limit[14], high_limit[14] = 0, 3  # occupant_count
-    low_limit[15], high_limit[15] = -10, 10  # temperature_difference to set point
-    low_limit[16], high_limit[16] = 0, 1  # power_outage
-    low_limit[17], high_limit[17] = -1, 20  # relative_non_shiftable_load
-    low_limit[18], high_limit[18] = -1, 3  # relative_solar_generation_1h_predicted
-    low_limit[19], high_limit[19] = 0, 1  # relative_dhw_storage_soc
-    low_limit[20], high_limit[20] = 0, 1  # relative_electrical_storage_soc
-    low_limit[21], high_limit[21] = -5, 20  # relative_net_electricity_consumption
-    low_limit[22], high_limit[22] = -1, 100  # relative_cooling_demand
-    low_limit[23], high_limit[23] = -1, 100  # relative_dhw_demand
+    low_limit[6], high_limit[6] = 0, 1  # mean_district_dhw_storage
+    low_limit[7], high_limit[7] = 0, 1  # mean_district_electrical_storage
+    low_limit[8], high_limit[8] = -5, 5  # indoor_dry_bulb_temperature
+    low_limit[9], high_limit[9] = 0, 8.83  # non_shiftable_load
+    low_limit[10], high_limit[10] = 0, 3  # solar_generation_1h_predicted
+    low_limit[11], high_limit[11] = 0, 2.85  # dhw_storage_soc
+    low_limit[12], high_limit[12] = 0, 4  # electrical_storage_soc
+    low_limit[13], high_limit[13] = -5, 20  # net_electricity_consumption
+    low_limit[14], high_limit[14] = 0, 10  # cooling_demand
+    low_limit[15], high_limit[15] = 0, 10  # dhw_demand
+    low_limit[16], high_limit[16] = 0, 3  # occupant_count
+    low_limit[17], high_limit[17] = -10, 10  # temperature_difference to set point
+    low_limit[18], high_limit[18] = 0, 1  # power_outage
+    low_limit[19], high_limit[19] = -1, 20  # relative_non_shiftable_load
+    low_limit[20], high_limit[20] = -1, 3  # relative_solar_generation_1h_predicted
+    low_limit[21], high_limit[21] = 0, 1  # relative_dhw_storage_soc
+    low_limit[22], high_limit[22] = 0, 1  # relative_electrical_storage_soc
+    low_limit[23], high_limit[23] = -5, 20  # relative_net_electricity_consumption
+    low_limit[24], high_limit[24] = -1, 100  # relative_cooling_demand
+    low_limit[25], high_limit[25] = -1, 100  # relative_dhw_demand
 
     return spaces.Box(low=low_limit, high=high_limit, dtype=np.float32)
 
