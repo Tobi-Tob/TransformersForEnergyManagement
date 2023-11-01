@@ -178,7 +178,7 @@ class CustomCallback(BaseCallback):
         :return: (bool) If the callback returns False, training is aborted early.
         """
 
-        if self.n_calls % self.eval_interval == 0:  # call every n steps and perform evaluation
+        if self.n_calls % self.eval_interval == 0 and self.n_calls > 719*3:  # call every n steps and perform evaluation
             seed = 73055  # seed 1
             for b in self.eval_env.buildings:
                 b.stochastic_power_outage_model.random_seed = seed

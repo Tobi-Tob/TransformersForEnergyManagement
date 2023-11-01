@@ -4,7 +4,7 @@ from citylearn.reward_function import RewardFunction
 
 class CombinedReward(RewardFunction):
     """
-    Version 2 increased power outage (57)
+    Version 5
     """
     def __init__(self, env_metadata):
         super().__init__(env_metadata)
