@@ -115,6 +115,8 @@ class CombinedReward(RewardFunction):
         ramping_cost v.2 single --- 3_ramping: 0.8 (starts at 0.8 and did not learn further)
 
         peak_cost v.1 citylearn MARL --- 3_ramping up to 1.2, 4_load_factor up to 1, 5_daily_peak down to 0.85, 6_annual_peak down to 0.8
+
+        load_factor_cost v.1
         """
         net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
         district_electricity_consumption = sum(net_electricity_consumption)
