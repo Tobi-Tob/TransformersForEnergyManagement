@@ -112,10 +112,12 @@ class CombinedReward(RewardFunction):
 
     def _get_grid_reward(self, observations):
         """
-        ramping_cost v.2 single best 3_ramping: 0.8 (starts at 0.8 and did not learn further)
+        ramping_cost v.2 single --- 3_ramping: 0.8 (starts at 0.8 and did not learn further)
+
+        peak_cost v.1 citylearn MARL --- 3_ramping up to 1.2, 4_load_factor up to 1, 5_daily_peak down to 0.85, 6_annual_peak down to 0.8
         """
         net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
-        # district_electricity_consumption = sum(net_electricity_consumption)
+        district_electricity_consumption = sum(net_electricity_consumption)
         self.electricity_consumption_history.append(net_electricity_consumption)
         self.electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
 
@@ -126,7 +128,14 @@ class CombinedReward(RewardFunction):
             except IndexError:
                 ramping_cost = 0
             reward.append(ramping_cost)
-        return reward
+
+        building_electricity_consumption = np.array(net_electricity_consumption, dtype=float) * -1
+        peak_cost = np.sign(building_electricity_consumption) * 0.01 * building_electricity_consumption ** 2 * np.nanmax(
+            [0, district_electricity_consumption])
+
+        load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1
+
+        return load_factor_cost
 
     def reset(self):
         self.current_time_step = 1
