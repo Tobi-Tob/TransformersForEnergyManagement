@@ -20,6 +20,8 @@ class CombinedReward(RewardFunction):
         """
         v.1 temp_diff_reward + 0.1 * emission_reward
         2_discomfort: 0.1, 1_carbon_emission: 1.0
+        v.2 temp_diff_reward + 0.3 * emission_reward
+        2_discomfort: 0.1, 1_carbon_emission: 1.0
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
@@ -33,7 +35,7 @@ class CombinedReward(RewardFunction):
         emission_reward = np.array(self._get_emission_reward(observations))
         grid_reward = np.array(self._get_grid_reward(observations))
 
-        return temp_diff_reward + 0.1 * emission_reward
+        return temp_diff_reward + 0.3 * emission_reward
 
     def _get_temp_diff_reward(self, observations):
         """
