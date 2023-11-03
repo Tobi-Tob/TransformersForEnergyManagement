@@ -257,11 +257,11 @@ class CustomCallback(BaseCallback):
             self.logger.record("rollout/validation_reward", J / self.n_eval_episodes)
 
             self.logger.record("metric/1_carbon_emissions", carbon_emissions)  # best 1_carbon_emission: 0.55
-            self.logger.record("metric/2_discomfort", discomfort)  # best 2_discomfort: 0.1
-            self.logger.record("metric/3_ramping", ramping)  # best 3_ramping = 0.80
-            self.logger.record("metric/4_load_factor", load_factor)
-            self.logger.record("metric/5_daily_peak", daily_peak)
-            self.logger.record("metric/6_annual_peak", annual_peak)
+            self.logger.record("metric/2_discomfort", discomfort)  # best 2_discomfort: 0.07
+            self.logger.record("metric/3_ramping", ramping)  # best 3_ramping:0.80
+            self.logger.record("metric/4_load_factor", load_factor)  # best 4_load_factor: 0.70
+            self.logger.record("metric/5_daily_peak", daily_peak)  # 5_daily_peak: 0.85
+            self.logger.record("metric/6_annual_peak", annual_peak)  # 6_annual_peak: 0.8
             self.logger.record("metric/7_thermal_resilience", thermal_resilience)  # best 7_thermal_resilience: 0.45
             self.logger.record("metric/8_unserved_energy", unserved_energy)  # best 8_unserved_energy: 0.45
 

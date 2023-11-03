@@ -17,6 +17,10 @@ class CombinedReward(RewardFunction):
         self.max_electricity_consumption = 0
 
     def calculate(self, observations):
+        """
+        v.1 temp_diff_reward + 0.1 * emission_reward
+        2_discomfort: 0.1, 1_carbon_emission: 1.0
+        """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
         if self.simulation_time_steps is None:
@@ -24,12 +28,12 @@ class CombinedReward(RewardFunction):
         if self.current_time_step >= self.simulation_time_steps:
             self.reset()
 
-        # temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
-        # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
-        # emission_reward = np.array(self._get_emission_reward(observations))
+        temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
+        unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
+        emission_reward = np.array(self._get_emission_reward(observations))
         grid_reward = np.array(self._get_grid_reward(observations))
 
-        return grid_reward
+        return temp_diff_reward + 0.1 * emission_reward
 
     def _get_temp_diff_reward(self, observations):
         """
@@ -116,7 +120,7 @@ class CombinedReward(RewardFunction):
 
         peak_cost v.1 citylearn MARL --- 3_ramping up to 1.2, 4_load_factor up to 1, 5_daily_peak down to 0.85, 6_annual_peak down to 0.8
 
-        load_factor_cost v.1
+        load_factor_cost v.1 --- 4_load_factor constant 0.7
         """
         net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
         district_electricity_consumption = sum(net_electricity_consumption)
@@ -136,7 +140,7 @@ class CombinedReward(RewardFunction):
             [0, district_electricity_consumption])
 
         load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1
-
+        # breaks markov property
         return load_factor_cost
 
     def reset(self):
