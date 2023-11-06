@@ -36,7 +36,7 @@ class CombinedReward(RewardFunction):
 
         Fixed action normalization error:
         a10 temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
-        a11 temp_diff_reward + 0.1 * emission_reward + grid_reward (initialized with c8_)
+        a12 temp_diff_reward + 0.1 * emission_reward + grid_reward (initialized with c8_)
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
