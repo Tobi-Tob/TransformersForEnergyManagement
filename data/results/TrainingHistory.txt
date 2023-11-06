@@ -221,18 +221,31 @@ Number of episodes with power outage: 24 / 60
 ENSEMBLE c7, c8, c9
 {'model_id': 'SAC', 'mode': 'ensemble', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 10066, 'learning_rate': 0.0003} CombinedReward
 Total agent time: 73.12s
-0.1    Carbon emissions   0.9498
-0.3    Unmet hours        0.0883
-0.075  Ramping            0.8773
-0.075  Load factor        0.9685
-0.075  Daily peak         0.8911
-0.075  All-time peak      0.8861
-0.15   Thermal resilience 0.6393
-0.15   Unserved energy    0.6892
-====>  Score:             0.5924901645324583
+0.1    Carbon emissions   0.9498 - 1.0334
+0.3    Unmet hours        0.0883 - 0.1114
+0.075  Ramping            0.8773 - 0.9226
+0.075  Load factor        0.9685 - 0.9595
+0.075  Daily peak         0.8911 - 0.9545
+0.075  All-time peak      0.8861 - 0.9324
+0.15   Thermal resilience 0.6393 - 0.5099
+0.15   Unserved energy    0.6892 - 0.6070
+====>  Score:             0.5924901645324583 - 0.5870
 Number of episodes with power outage: 8 / 15
 
-Process finished with exit code 0
+ENSEMBLE c7, c8, c9 - with outage clip rule (but with action normalization error)
+{'model_id': 'SAC', 'mode': 'ensemble', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 10066, 'learning_rate': 0.0003} CombinedReward
+Total agent time: 74.31s
+0.1    Carbon emissions   0.9497
+0.3    Unmet hours        0.0873
+0.075  Ramping            0.8769
+0.075  Load factor        0.9669
+0.075  Daily peak         0.8897
+0.075  All-time peak      0.8861
+0.15   Thermal resilience 0.3342
+0.15   Unserved energy    0.4733
+====>  Score:             0.5137587621564449
+Number of episodes with power outage: 8 / 15
+
 
 
 
