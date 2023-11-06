@@ -96,7 +96,7 @@ class SACAgent(Agent):
 
         self.current_timestep += 1
 
-        return modify_action(actions, self.building_metadata)
+        return modify_action(actions, observations, self.building_metadata)
 
     def predict_obs_value(self, observations):
         obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)

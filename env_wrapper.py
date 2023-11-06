@@ -92,10 +92,14 @@ def modify_obs(obs: List[List[float]], forecaster: dict, metadata, current_times
     return obs_modified
 
 
-def modify_action(action: List[ndarray], metadata) -> List[List[float]]:
+def modify_action(action: List[ndarray], obs: List[List[float]], metadata) -> List[List[float]]:
     """
     Input: (3,3), Output: (1, 9), values are modified with corresponding building specific constants.
     """
+    obs = obs[0]
+    obs_building_level = obs[15:21] + obs[25:]
+    assert len(obs_building_level) == 11 * len(metadata)
+
     cooling_nominal_powers = []
     dhw_storage_capacity = []
     electrical_storage_capacity = []
@@ -106,9 +110,13 @@ def modify_action(action: List[ndarray], metadata) -> List[List[float]]:
         electrical_storage_capacity.append(building_metadata['electrical_storage']['capacity'])
 
     for i in range(len(metadata)):
-        action[i][0] = action[i][0] / cooling_nominal_powers[i]
-        action[i][1] = action[i][1] / dhw_storage_capacity[i]
-        action[i][2] = action[i][2] / electrical_storage_capacity[i]
+        action[i][0] = action[i][0] / cooling_nominal_powers[i]  # dhw_storage_action: [0, 3, 6] TODO FEHLER
+        action[i][1] = action[i][1] / dhw_storage_capacity[i]  # electrical_storage_action: [1, 4, 7]
+        action[i][2] = action[i][2] / electrical_storage_capacity[i]  # cooling_device_action: [2, 5, 8]
+
+        if obs_building_level[10 + 11 * i] == 1:  # if outage do not allow to fill the storages
+            action[i][0] = np.clip(action[i][0], a_min=-np.inf, a_max=0)  # dhw_storage_action
+            action[i][1] = np.clip(action[i][1], a_min=-np.inf, a_max=0)  # electrical_storage_action
 
     return [np.concatenate(action).tolist()]
 
@@ -279,7 +287,7 @@ class CityEnvForTraining(Env):
                 # self.evaluation_model.set_training_mode(False) ?
                 actions_of_all_buildings.append(action_of_other_building)
 
-        actions = modify_action(actions_of_all_buildings, self.metadata)
+        actions = modify_action(actions_of_all_buildings, self.env.observations, self.metadata)
 
         # do step in whole environment
         next_obs, reward, done, info = self.env.step(actions)
