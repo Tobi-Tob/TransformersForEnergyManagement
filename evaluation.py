@@ -78,7 +78,7 @@ def evaluate(config):
 
     # model = SAC.load("my_models/SAC_em6_/m0_11504_steps.zip")
     # agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
-    agent = SACAgent(wrapper_env, mode='submission')
+    agent = SACAgent(wrapper_env)
 
     agent.set_model_index(0)
     switch_models = True

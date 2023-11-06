@@ -13,19 +13,23 @@ from env_wrapper import modify_obs, modify_action
 
 class SACAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, mode='submission', single_model=None, save_observations=False, **kwargs: Any):
+    def __init__(self, env: CityLearnEnv, mode='ensemble', single_model=None, save_observations=False, **kwargs: Any):
         super().__init__(env, **kwargs)
         self.mode = mode
         self.save_observations = save_observations
         self.current_timestep = 0
         self.models = []
         if mode in ['switch', 'ensemble']:
-            model_id = 'SAC_1'
             self.model_index = 0
-            for n in [1, 2, 3]:
-                model_n = SAC.load("my_models/" + model_id + "/m" + str(n))
-                model_n.policy.set_training_mode(False)
-                self.models.append(model_n)
+            model1 = SAC.load("my_models/submission_models/SAC_c9__10066.zip")
+            model2 = SAC.load("my_models/submission_models/SAC_c7__18694.zip")
+            model3 = SAC.load("my_models/submission_models/SAC_c8__11504.zip")
+            model_id = type(model1).__name__
+            self.models.append(model1)
+            self.models.append(model2)
+            self.models.append(model3)
+            for model in self.models:
+                model.policy.set_training_mode(False)
         elif mode in ['single']:
             if single_model is None:
                 raise TypeError('A model has to be given by single_model, but is None')
@@ -33,8 +37,7 @@ class SACAgent(Agent):
             self.models.append(single_model)
             self.models[0].policy.set_training_mode(False)
         else:
-            # model = SAC.load("my_models/submission_models/SAC_c7__18694.zip")
-            model = SAC.load("my_models/submission_models/SAC_c8__11504.zip")
+            model = SAC.load("my_models/submission_models/SAC_c7__18694.zip")
             model_id = type(model).__name__
             self.models.append(model)
             self.models[0].policy.set_training_mode(False)
@@ -74,10 +77,12 @@ class SACAgent(Agent):
         actions = []
         for i in range(len(obs_modified)):
             if self.mode is 'ensemble':
-                action_m1, _ = self.models[0].predict(obs_modified[i], deterministic=True)
-                action_m2, _ = self.models[1].predict(obs_modified[i], deterministic=True)
-                action_m3, _ = self.models[2].predict(obs_modified[i], deterministic=True)
-                action_i = (np.array(action_m1) + np.array(action_m2) + np.array(action_m3)) / 3
+                ensemble_actions = []
+                for m, model in enumerate(self.models):
+                    action_m, _ = self.models[m].predict(obs_modified[i], deterministic=True)
+                    ensemble_actions.append(np.array(action_m))
+
+                action_i = sum(ensemble_actions) / len(self.models)  # mean action of the ensemble
                 action_i = action_i.tolist()
             elif self.mode is 'switch':
                 action_i, _ = self.models[self.model_index].predict(obs_modified[i], deterministic=True)
