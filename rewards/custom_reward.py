@@ -31,6 +31,8 @@ class CombinedReward(RewardFunction):
         2_discomfort: 0.18, 1_carbon_emission: 0.95, 3_ramping: 1.2 4_load: 0.98, 56_peak: 0.90 0.80 good 8_unserved 0.37
         v.8 temp_diff_reward + grid_reward
         2_discomfort: 0.10, 1_carbon_emission: 0.96, 3_ramping: 1.0 4_load: 1.0, 56_peak: 0.95 0.95
+        v.9 temp_diff_reward + grid_reward
+        2_discomfort: 0.15, 1_carbon_emission: 0.97, 3_ramping: 1.0 4_load: 0.98, 56_peak: 0.90 0.85 good 8_unserved 0.45
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
@@ -154,7 +156,7 @@ class CombinedReward(RewardFunction):
         load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1
         # breaks markov property, bad?
 
-        return 0.2 * ramping_cost
+        return 0.3 * ramping_cost + peak_cost
 
     def reset(self):
         self.current_time_step = 1
