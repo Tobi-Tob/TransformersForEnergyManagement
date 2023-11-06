@@ -33,6 +33,9 @@ class CombinedReward(RewardFunction):
         2_discomfort: 0.10, 1_carbon_emission: 0.96, 3_ramping: 1.0 4_load: 1.0, 56_peak: 0.95 0.95
         v.9 temp_diff_reward + grid_reward
         2_discomfort: 0.15, 1_carbon_emission: 0.97, 3_ramping: 1.0 4_load: 0.98, 56_peak: 0.90 0.85 good 8_unserved 0.45
+
+        Fixed action normalization error:
+        a10 temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
@@ -41,12 +44,12 @@ class CombinedReward(RewardFunction):
         if self.current_time_step >= self.simulation_time_steps:
             self.reset()
 
-        temp_diff_reward = np.array(self._get_temp_diff_reward(observations))
-        unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))
-        emission_reward = np.array(self._get_emission_reward(observations))
-        grid_reward = np.array(self._get_grid_reward(observations))
+        temp_diff_reward = np.array(self._get_temp_diff_reward(observations))  # -398.46
+        unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))  # -56.93
+        emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
+        grid_reward = np.array(self._get_grid_reward(observations))  # -238
 
-        return temp_diff_reward + grid_reward
+        return temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
 
     def _get_temp_diff_reward(self, observations):
         """
@@ -147,16 +150,16 @@ class CombinedReward(RewardFunction):
             except IndexError:
                 ramping = 0
             ramping_cost.append(ramping)
-        ramping_cost = np.array(ramping_cost)
+        ramping_cost = np.array(ramping_cost)  # -553.55
 
         building_electricity_consumption = np.array(net_electricity_consumption, dtype=float) * -1
         peak_cost = np.sign(building_electricity_consumption) * 0.01 * building_electricity_consumption ** 2 * np.nanmax(
-            [0, district_electricity_consumption])
+            [0, district_electricity_consumption])  # -316.7
 
-        load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1
+        load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1  # -1351.5
         # breaks markov property, bad?
 
-        return 0.3 * ramping_cost + peak_cost
+        return 0.2 * ramping_cost + 0.4 * peak_cost
 
     def reset(self):
         self.current_time_step = 1
