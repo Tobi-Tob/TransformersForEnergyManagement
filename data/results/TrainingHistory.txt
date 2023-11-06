@@ -235,16 +235,26 @@ Number of episodes with power outage: 8 / 15
 ENSEMBLE c7, c8, c9 - with outage clip rule (but with action normalization error)
 {'model_id': 'SAC', 'mode': 'ensemble', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 10066, 'learning_rate': 0.0003} CombinedReward
 Total agent time: 74.31s
-0.1    Carbon emissions   0.9497
-0.3    Unmet hours        0.0873
-0.075  Ramping            0.8769
-0.075  Load factor        0.9669
-0.075  Daily peak         0.8897
-0.075  All-time peak      0.8861
-0.15   Thermal resilience 0.3342
-0.15   Unserved energy    0.4733
-====>  Score:             0.5137587621564449
+0.1    Carbon emissions   0.9497 - 1.0335
+0.3    Unmet hours        0.0873 - 0.1116
+0.075  Ramping            0.8769 - 0.9232
+0.075  Load factor        0.9669 - 0.9595
+0.075  Daily peak         0.8897 - 0.9548
+0.075  All-time peak      0.8861 - 0.9323
+0.15   Thermal resilience 0.3342 - 0.5307
+0.15   Unserved energy    0.4733 - 0.6143
+====>  Score:             0.5137587621564449 - 0.5914 (outage clip rule worse than 0.5870)
 Number of episodes with power outage: 8 / 15
+
+
+
+777368851142
+one_minus_thermal_resilience_proportion
+539682539683
+power_outage_normalized_unserved_energy_total
+476619340318
+average_score
+525223731995
 
 
 

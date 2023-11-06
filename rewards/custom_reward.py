@@ -36,6 +36,7 @@ class CombinedReward(RewardFunction):
 
         Fixed action normalization error:
         a10 temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
+        a11 temp_diff_reward + 0.1 * emission_reward + grid_reward (initialized with c8_)
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
@@ -45,11 +46,11 @@ class CombinedReward(RewardFunction):
             self.reset()
 
         temp_diff_reward = np.array(self._get_temp_diff_reward(observations))  # -398.46
-        unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))  # -56.93
+        # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))  # -56.93
         emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
         grid_reward = np.array(self._get_grid_reward(observations))  # -238
 
-        return temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
+        return temp_diff_reward + 0.1 * emission_reward + grid_reward
 
     def _get_temp_diff_reward(self, observations):
         """
