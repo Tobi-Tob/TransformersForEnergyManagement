@@ -37,6 +37,7 @@ class CombinedReward(RewardFunction):
         Fixed action normalization error:
         a10 temp_diff_reward + unserved_energy_reward + 0.03 * emission_reward + grid_reward
         a12 temp_diff_reward + 0.1 * emission_reward + grid_reward (initialized with c8_)
+        a13 temp_diff_reward + 0.05 * emission_reward + grid_reward
         """
         if not self.central_agent:
             raise NotImplementedError("RewardFunction only supports central agent")
@@ -50,7 +51,7 @@ class CombinedReward(RewardFunction):
         emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
         grid_reward = np.array(self._get_grid_reward(observations))  # -238
 
-        return temp_diff_reward + 0.1 * emission_reward + grid_reward
+        return temp_diff_reward + 0.05 * emission_reward + grid_reward
 
     def _get_temp_diff_reward(self, observations):
         """
@@ -160,7 +161,7 @@ class CombinedReward(RewardFunction):
         load_factor_cost = np.mean(self.electricity_consumption_history, axis=0) / np.max(self.electricity_consumption_history, axis=0) - 1  # -1351.5
         # breaks markov property, bad?
 
-        return 0.2 * ramping_cost + 0.4 * peak_cost
+        return 0.1 * ramping_cost + 0.4 * peak_cost
 
     def reset(self):
         self.current_time_step = 1

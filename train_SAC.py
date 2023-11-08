@@ -30,7 +30,7 @@ def train():
     activation_fn = torch.nn.ReLU  # LeakyReLU
     buffer_size = 10_000
     batch_size = 256
-    gamma = 1
+    gamma = 0.99
 
     total_timesteps = 30_000  # total timesteps to run in the environment
     eval_interval = 1438  # how frequent to do a validation run in the complete environment
