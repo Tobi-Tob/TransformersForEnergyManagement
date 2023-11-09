@@ -405,7 +405,7 @@ class NoneShiftableLoadForecaster:
 
 def train_load_forecaster(save_model: bool):
     # hyperparameters
-    lr = 0.001
+    lr = 0.003
     n_epochs = 5000
     batch_size = 1000
 
@@ -430,15 +430,16 @@ def train_load_forecaster(save_model: bool):
 
     # Define the model
     model = nn.Sequential(
-        nn.Linear(len(X[0]), 64),
+        nn.Linear(len(X[0]), 16),
         nn.ReLU(),
-        nn.Linear(64, 16),
+        nn.Linear(16, 8),
         nn.ReLU(),
-        nn.Linear(16, 1),
+        nn.Linear(8, 1),
     )
 
     # loss function and optimizer
-    loss_function = nn.MSELoss()  # mean square error
+    # loss_function = nn.MSELoss()  # mean square error
+    loss_function = nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
     batch_start = torch.arange(0, len(X_train), batch_size)
@@ -450,7 +451,7 @@ def train_load_forecaster(save_model: bool):
     test_loss_history = []
 
     for epoch in range(n_epochs):
-        if epoch == 100:  # lower learning rate
+        if epoch == 1000:  # lower learning rate
             optimizer = optim.Adam(model.parameters(), lr=lr / 10)
         model.train()
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0) as bar:
