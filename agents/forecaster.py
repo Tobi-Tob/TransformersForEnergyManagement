@@ -345,8 +345,7 @@ def train_temperature_forecaster(save_model: bool):
 
 class NoneShiftableLoadForecaster:
     def __init__(self, non_shiftable_load_estimate: List[float]):
-        self.model = AttentionBasedModel()
-        self.model.load_state_dict(torch.load('my_models/Forecaster/load_forecaster'))
+        self.model = torch.load('my_models/Forecaster/load_forecaster')
         self.scaler = load('my_models/Forecaster/load_obs_scaler.bin')
         self.non_shiftable_load_estimate = non_shiftable_load_estimate
         self.input_dim = 4
@@ -449,9 +448,9 @@ class AttentionBasedModel(nn.Module):
 
 def train_load_forecaster(save_model: bool):
     # hyperparameters
-    lr = 0.005
-    n_epochs = 200
-    batch_size = 300
+    lr = 0.003
+    n_epochs = 3000
+    batch_size = 1000
 
     # load data set
     X = np.load('../data/load_forecast/X.npy')
@@ -473,7 +472,15 @@ def train_load_forecaster(save_model: bool):
     y_test = torch.tensor(y_test, dtype=torch.float32).reshape(-1, 1)
 
     # Define the model
-    model = AttentionBasedModel()
+    model = nn.Sequential(
+        nn.Linear(len(X[0]), 24),
+        nn.ReLU(),
+        nn.Linear(24, 6),
+        nn.ReLU(),
+        nn.Linear(6, 3),
+        nn.ReLU(),
+        nn.Linear(3, 1),
+    )
 
     # loss function and optimizer
     loss_function = nn.L1Loss()
@@ -489,8 +496,6 @@ def train_load_forecaster(save_model: bool):
 
     for epoch in range(n_epochs):
         model.train()
-        if epoch == 100:  # lower learning rate
-            optimizer = optim.Adam(model.parameters(), lr=lr / 5)
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0) as bar:
             bar.set_description(f"Epoch {epoch}")
             for start in bar:
@@ -526,12 +531,9 @@ def train_load_forecaster(save_model: bool):
     # restore model and return best accuracy
     model.load_state_dict(best_weights)
 
-    print("Model's state_dict:")
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-
     if save_model:
-        torch.save(model.state_dict(), '../my_models/Forecaster/load_forecaster')
+        # torch.save(model.state_dict(), '../my_models/Forecaster/load_forecaster')
+        torch.save(model, '../my_models/Forecaster/load_forecaster')
         dump(scaler, '../my_models/Forecaster/load_obs_scaler.bin', compress=False)
 
     print("Test MSE: %.6f" % best_test_loss)  # best 0.658855
