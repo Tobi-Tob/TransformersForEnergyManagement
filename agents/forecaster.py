@@ -344,30 +344,39 @@ def train_temperature_forecaster(save_model: bool):
 
 
 class NoneShiftableLoadForecaster:
-    def __init__(self):
+    def __init__(self, non_shiftable_load_estimate: List[float]):
         self.model = torch.load('my_models/Forecaster/load_forecaster')
         self.scaler = load('my_models/Forecaster/load_obs_scaler.bin')
+        self.non_shiftable_load_estimate = non_shiftable_load_estimate
         self.input_dim = 4
 
-    def reset(self):
-        pass
+    def reset(self, non_shiftable_load_estimate):
+        self.non_shiftable_load_estimate = non_shiftable_load_estimate
 
-    def forecast(self, observation, non_shiftable_load_estimate: List[float]):
+    def forecast(self, observation) -> List[float]:
         """
         Input observations and the non-shiftable load estimates of each building.
-        Returns predicted non_shiftable_load for next timestep.
+        Returns a list of predicted non_shiftable_loads for every building.
         """
-        X = self.modify_obs(observation, non_shiftable_load_estimate)
-        X = torch.tensor(self.scaler.transform(X), dtype=torch.float32)
-        next_load_prediction = self.model(X).detach().numpy()[0][0]
+        modified_obs = self.modify_obs(observation)
+        next_load_prediction = []
+        for i, building_obs in enumerate(modified_obs):
+            building_obs = [building_obs]
+            X = torch.tensor(self.scaler.transform(building_obs), dtype=torch.float32)
+            y = self.model(X).detach().numpy()[0][0]
+
+            if building_obs[0][3] == -1:  # TODO not active
+                y = 0.5 * (y + building_obs[0][2])
+                print('outage', building_obs[0][3], 'load', building_obs[0][2], 'y_mean', y)
+            next_load_prediction.append(y * self.non_shiftable_load_estimate[i])
 
         return next_load_prediction
 
-    def modify_obs(self, obs: List[List[float]], non_shiftable_load_estimate: List[float]) -> np.array:
+    def modify_obs(self, obs: List[List[float]]) -> np.array:
         """
         Input: (1,52), Output: (4)
         Modify the observation space to:
-        [['day_type', 'hour', 'current_non_shiftable_load', 'occupant_count'],...]
+        [['day_type', 'hour', 'current_non_shiftable_load_normalized', 'occupant_count'],...]
         """
         #  --> Delete unimportant observations
         #  --> Normalize current_non_shiftable_load with non_shiftable_load_estimate
@@ -382,10 +391,10 @@ class NoneShiftableLoadForecaster:
         # building-level observations:
         assert len(obs_buildings) % 11 == 0  # 11 observations per building
         obs_single_building = [obs_buildings[i:i + 11] for i in range(0, len(obs_buildings), 11)]
-        assert len(obs_single_building) == len(non_shiftable_load_estimate)
+        assert len(obs_single_building) == len(self.non_shiftable_load_estimate)
         modified_obs = []
         for i, b in enumerate(obs_single_building):
-            current_non_shiftable_load_normalized = b[1] / non_shiftable_load_estimate[i]
+            current_non_shiftable_load_normalized = b[1] / self.non_shiftable_load_estimate[i]
             occupant_count = b[8]
             obs_building_i = [day_type, hour, current_non_shiftable_load_normalized, occupant_count]
             modified_obs.append(obs_building_i)
@@ -396,9 +405,9 @@ class NoneShiftableLoadForecaster:
 
 def train_load_forecaster(save_model: bool):
     # hyperparameters
-    lr = 0.005
-    n_epochs = 500
-    batch_size = 100
+    lr = 0.001
+    n_epochs = 5000
+    batch_size = 1000
 
     # load data set
     X = np.load('../data/load_forecast/X.npy')
@@ -421,13 +430,11 @@ def train_load_forecaster(save_model: bool):
 
     # Define the model
     model = nn.Sequential(
-        nn.Linear(len(X[0]), 24),
+        nn.Linear(len(X[0]), 64),
         nn.ReLU(),
-        nn.Linear(24, 12),
+        nn.Linear(64, 16),
         nn.ReLU(),
-        nn.Linear(12, 6),
-        nn.ReLU(),
-        nn.Linear(6, 1),
+        nn.Linear(16, 1),
     )
 
     # loss function and optimizer
@@ -485,7 +492,7 @@ def train_load_forecaster(save_model: bool):
         torch.save(model, '../my_models/Forecaster/load_forecaster')
         dump(scaler, '../my_models/Forecaster/load_obs_scaler.bin', compress=False)
 
-    print("Test MSE: %.6f" % best_test_loss)
+    print("Test MSE: %.6f" % best_test_loss)  # best 0.658855
     print("Test RMSE: %.6f" % np.sqrt(best_test_loss))
     plt.plot(training_loss_history, label="Training MSE")
     plt.plot(test_loss_history, label="Test MSE")
@@ -496,4 +503,4 @@ def train_load_forecaster(save_model: bool):
 
 
 if __name__ == '__main__':
-    train_temperature_forecaster(save_model=False)
+    train_load_forecaster(save_model=True)

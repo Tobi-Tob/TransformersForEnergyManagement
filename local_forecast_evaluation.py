@@ -6,7 +6,8 @@ import json
 
 from citylearn.citylearn import CityLearnEnv
 
-from agents.forecaster import SolarGenerationForecaster, TemperatureForecaster
+from agents.forecaster import SolarGenerationForecaster, TemperatureForecaster, NoneShiftableLoadForecaster
+from agents.zero_agent import ZeroAgent
 
 """
 This is only a reference script provided to allow you 
@@ -67,151 +68,90 @@ def create_citylearn_env(config):
 
 
 def evaluate(config):
-    print("Starting local evaluation")
-
-    env, env_data = create_citylearn_env(config)
-    tau = 1  # 48
-    print("Env Created")
-
-    model = SubmissionModel(env_data=env_data, tau=tau)
-
-    model_time_elapsed = 0
-
-    num_steps = 0
-    interrupted = False
-
-    forecast_quailty_scores = []
-
+    print("Starting forecaster evaluation/data collection")
     collect_data = False
     evaluate_forecaster = True
-    forecaster = SolarGenerationForecaster()
+
+    env, env_data = create_citylearn_env(config)
+    model = ZeroAgent(env)
+
+    # Init forecaster:
+
+    # forecaster = SolarGenerationForecaster()
     # forecaster = TemperatureForecaster()
+
+    non_shiftable_load_estimate = []
+    for bm in env.get_metadata()['buildings']:
+        non_shiftable_load = bm['annual_non_shiftable_load_estimate'] / bm['simulation_time_steps']
+        non_shiftable_load_estimate.append(non_shiftable_load)
+
+    forecaster = NoneShiftableLoadForecaster(non_shiftable_load_estimate)
+
     X = []
     y = []
-    error = []
+    error_b1 = []
+    error_b2 = []
+    error_b3 = []
 
-    try:
-        observations = env.reset()
-        for _ in tqdm(range(env.time_steps)):
+    observations = env.reset()
+    for _ in tqdm(range(env.time_steps)):
 
-            ### This is only a reference script provided to allow you
-            ### to do local evaluation. The evaluator **DOES NOT**
-            ### use this script for orchestrating the evaluations.
+        if collect_data:
+            obs_modified_b1 = forecaster.modify_obs(observations)[0]
+            obs_modified_b2 = forecaster.modify_obs(observations)[1]
+            obs_modified_b3 = forecaster.modify_obs(observations)[2]
+            X.append(obs_modified_b1)
+            X.append(obs_modified_b2)
+            X.append(obs_modified_b3)
 
-            if collect_data:
-                obs_modified = forecaster.modify_obs(observations)[0]
-                X.append(obs_modified)
+        if evaluate_forecaster:
+            predictions = forecaster.forecast(observations)
 
-            step_start = time.perf_counter()
-            forecasts_dict = model.compute_forecast(observations)
-            model_time_elapsed += time.perf_counter() - step_start
+        # step in environment
+        actions = model.predict(observations)
+        observations, _, done, _ = env.step(actions)
 
-            # Perform logging.
-            # ========================================================================
-            ground_truth_vals = {
-                **{b.name: {
-                    'Equipment_Eletric_Power': b.energy_simulation.non_shiftable_load[env.time_step + 1:env.time_step + 1 + tau],
-                    'DHW_Heating': b.energy_simulation.dhw_demand[env.time_step + 1:env.time_step + 1 + tau],
-                    'Cooling_Load': b.energy_simulation.cooling_demand[env.time_step + 1:env.time_step + 1 + tau]
-                } for b in env.buildings},
-                'Solar_Generation': env.buildings[0].energy_simulation.solar_generation[env.time_step + 1:env.time_step + 1 + tau],
-                'Carbon_Intensity': env.buildings[0].carbon_intensity.carbon_intensity[env.time_step + 1:env.time_step + 1 + tau]
-            }
-            gt_length = len(ground_truth_vals['Carbon_Intensity'])  # length of ground truth data
+        if evaluate_forecaster:
+            # target_temperature = observations[0][2]
+            target_load_b1 = observations[0][16]
+            target_load_b2 = observations[0][31]
+            target_load_b3 = observations[0][42]
+            error_b1.append(np.abs(predictions[0] - target_load_b1))
+            error_b2.append(np.abs(predictions[1] - target_load_b2))
+            error_b3.append(np.abs(predictions[2] - target_load_b3))
+            print('target', target_load_b1, 'prediction', predictions[0])
+            print('target', target_load_b2, 'prediction', predictions[1])
+            print('target', target_load_b3, 'prediction', predictions[2])
 
-            forecast_scores = {
-                **{b.name: {
-                    load_type: rmse(np.array(forecasts_dict[b.name][load_type])[:gt_length], np.array(ground_truth_vals[b.name][load_type]))
-                    for load_type in ['Equipment_Eletric_Power', 'DHW_Heating', 'Cooling_Load']}
-                    for b in env.buildings},
-                **{param: rmse(np.array(forecasts_dict[param])[:gt_length], np.array(ground_truth_vals[param]))
-                   for param in ['Solar_Generation', 'Carbon_Intensity']}
-            }
-            forecast_quailty_scores.append(forecast_scores)  # store time step score for post-processing
+        if collect_data:
+            next_value_b1 = observations[0][16] / non_shiftable_load_estimate[0]
+            next_value_b2 = observations[0][31] / non_shiftable_load_estimate[1]
+            next_value_b3 = observations[0][42] / non_shiftable_load_estimate[2]
+            y.append(next_value_b1)
+            y.append(next_value_b2)
+            y.append(next_value_b3)
 
-            # Step environment.
-            # ========================================================================
-            actions = np.zeros((1, len(env.buildings) * 3))
-
-            if evaluate_forecaster:
-                prediction = forecaster.forecast(observations, 2.4) * 2.4
-
-            observations, _, done, _ = env.step(actions)
-
-            if evaluate_forecaster:
-                # target_temperature = observations[0][2]
-                target_solar = observations[0][17]
-                error.append(np.abs(prediction - target_solar))
-                # print('target', target, 'prediction', prediction)
-
-            if collect_data:
-                next_value = observations[0][2]
-                y.append(next_value)
-
-            if done:
-                break
-
-            num_steps += 1
-
-    except KeyboardInterrupt:
-        print("========================= Stopping Evaluation =========================")
-        interrupted = True
-
-    if not interrupted:
-        print("=========================Completed=========================")
-
-    print(f"Total time taken by agent: {model_time_elapsed}s")
-
-    # Compute forecast quality metrics.
-    # ===================================================================================
-    mean_param_values = {
-        **{b.name: {
-            'Equipment_Eletric_Power': np.mean(b.energy_simulation.non_shiftable_load),
-            'DHW_Heating': np.mean(b.energy_simulation.dhw_demand),
-            'Cooling_Load': np.mean(b.energy_simulation.cooling_demand)
-        } for b in env.buildings},
-        'Solar_Generation': np.mean(env.buildings[0].energy_simulation.solar_generation),
-        'Carbon_Intensity': np.mean(env.buildings[0].carbon_intensity.carbon_intensity)
-    }
-    results = {
-        **{b.name: {
-            load_type: np.mean([d[b.name][load_type] for d in forecast_quailty_scores]) / mean_param_values[b.name][load_type]
-            for load_type in ['Equipment_Eletric_Power', 'DHW_Heating', 'Cooling_Load']}
-            for b in env.buildings},
-        **{param: np.mean([d[param] for d in forecast_quailty_scores]) / mean_param_values[param]
-           for param in ['Solar_Generation', 'Carbon_Intensity']}
-    }
-
-    all_preds = []
-    for b in env.buildings:
-        all_preds.append(results[b.name]['Equipment_Eletric_Power'])
-        all_preds.append(results[b.name]['DHW_Heating'])
-        all_preds.append(results[b.name]['Cooling_Load'])
-    all_preds.append(results['Solar_Generation'])
-    all_preds.append(results['Carbon_Intensity'])
-    results['Mean_Forecast_NRMSE'] = np.mean(all_preds)
-
-    results['Mean_Equipment_Eletric_Power'] = np.mean([results[b.name]['Equipment_Eletric_Power'] for b in env.buildings])
-    results['Mean_DHW_Heating'] = np.mean([results[b.name]['DHW_Heating'] for b in env.buildings])
-    results['Mean_Cooling_Load'] = np.mean([results[b.name]['Cooling_Load'] for b in env.buildings])
-
-    print("=========================Forecast Quality Results=========================")
-    print(json.dumps(results, indent=4))
+        if done:
+            break
 
     if collect_data:
-        print(X)
-        print(y)
-        np.save("data/temperature_forecast/X", X)
-        np.save("data/temperature_forecast/y", y)
+        print('Data collected:')
+        print('X:', X)
+        print('len(X):', len(X))
+        print('y:', y)
+        print('len(y):', len(y))
+        np.save("data/load_forecast/X", X)
+        np.save("data/load_forecast/y", y)
     if evaluate_forecaster:
+        print('Forecaster evaluated:')
         print('mean:')
-        print(np.mean(error))
+        print(np.mean(error_b1 + error_b2 + error_b3))
         print('std:')
-        print(np.std(error))
+        print(np.std(error_b1 + error_b2 + error_b3))
         print('max:')
-        print(np.max(error))
+        print(np.max(error_b1 + error_b2 + error_b3))
         print('min:')
-        print(np.min(error))
+        print(np.min(error_b1 + error_b2 + error_b3))
 
 
 if __name__ == '__main__':
