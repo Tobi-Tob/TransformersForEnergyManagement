@@ -62,6 +62,59 @@ class SACAgent(Agent):
         if self.save_observations:
             self.all_observations = []
         # print(self.models[0].policy)
+        # SACPolicy(
+        #   (actor): Actor(
+        #     (features_extractor): FlattenExtractor(
+        #       (flatten): Flatten(start_dim=1, end_dim=-1)
+        #     )
+        #     (latent_pi): Sequential(
+        #       (0): Linear(in_features=26, out_features=256, bias=True)
+        #       (1): ReLU()
+        #       (2): Linear(in_features=256, out_features=256, bias=True)
+        #       (3): ReLU()
+        #     )
+        #     (mu): Linear(in_features=256, out_features=3, bias=True)
+        #     (log_std): Linear(in_features=256, out_features=3, bias=True)
+        #   )
+        #   (critic): ContinuousCritic(
+        #     (features_extractor): FlattenExtractor(
+        #       (flatten): Flatten(start_dim=1, end_dim=-1)
+        #     )
+        #     (qf0): Sequential(
+        #       (0): Linear(in_features=29, out_features=256, bias=True)
+        #       (1): ReLU()
+        #       (2): Linear(in_features=256, out_features=256, bias=True)
+        #       (3): ReLU()
+        #       (4): Linear(in_features=256, out_features=1, bias=True)
+        #     )
+        #     (qf1): Sequential(
+        #       (0): Linear(in_features=29, out_features=256, bias=True)
+        #       (1): ReLU()
+        #       (2): Linear(in_features=256, out_features=256, bias=True)
+        #       (3): ReLU()
+        #       (4): Linear(in_features=256, out_features=1, bias=True)
+        #     )
+        #   )
+        #   (critic_target): ContinuousCritic(
+        #     (features_extractor): FlattenExtractor(
+        #       (flatten): Flatten(start_dim=1, end_dim=-1)
+        #     )
+        #     (qf0): Sequential(
+        #       (0): Linear(in_features=29, out_features=256, bias=True)
+        #       (1): ReLU()
+        #       (2): Linear(in_features=256, out_features=256, bias=True)
+        #       (3): ReLU()
+        #       (4): Linear(in_features=256, out_features=1, bias=True)
+        #     )
+        #     (qf1): Sequential(
+        #       (0): Linear(in_features=29, out_features=256, bias=True)
+        #       (1): ReLU()
+        #       (2): Linear(in_features=256, out_features=256, bias=True)
+        #       (3): ReLU()
+        #       (4): Linear(in_features=256, out_features=1, bias=True)
+        #     )
+        #   )
+        # )
 
     def register_reset(self, observations):
         """ Register reset needs the first set of actions after reset """

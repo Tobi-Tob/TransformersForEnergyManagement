@@ -3,7 +3,10 @@ import datetime
 import os
 
 import torch
+import torch.nn as nn
 from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from stable_baselines3.common.preprocessing import get_flattened_obs_dim
 
 from env_wrapper import CityEnvForTraining
 from stable_baselines3 import SAC
@@ -11,6 +14,53 @@ from stable_baselines3 import SAC
 from rewards.user_reward import SubmissionReward
 from utils import init_environment, CustomCallback
 
+
+class AttentionBasedFeatureExtractor(BaseFeaturesExtractor):
+    """
+    :param observation_space: (gym.Space)
+    :param features_dim: (int) Number of features extracted.
+        This corresponds to the number of unit for the last layer.
+    """
+
+    def __init__(self, observation_space, features_dim, num_heads = 1, dropout = 0.0):
+        self.input_dim = get_flattened_obs_dim(observation_space)
+        self.num_heads = num_heads
+        self.dropout = dropout
+        super().__init__(observation_space, features_dim=features_dim)
+
+        # Self Attention block
+        self.self_attention = nn.MultiheadAttention(embed_dim=self.input_dim, num_heads=self.num_heads, dropout=self.dropout)
+        # TODO embed_dim = 1? How to use attention for scalar values?
+
+        # linear block
+        self.linear_net = nn.Sequential(
+            nn.Linear(self.input_dim, self.input_dim),
+            nn.Dropout(self.dropout),
+            nn.ReLU(inplace=False),
+            nn.Linear(self.input_dim, self.features_dim),
+        )
+
+        # Layers to apply in between the main layers
+        self.flatten = nn.Flatten()
+        self.norm1 = nn.LayerNorm(self.input_dim)
+        self.norm2 = nn.LayerNorm(self.features_dim)
+        self.dropout = nn.Dropout(self.dropout)
+
+    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        # Flatten input: 26 ---> 26
+        x = self.flatten(observations)
+
+        # Attention block: 26 ---> 26
+        attention_out, _ = self.self_attention(x, x, x)
+        x = x + self.dropout(attention_out)  # residual connection? TODO
+        x = self.norm1(x)  # Use norm? TODO
+
+        # Linear block:  26 ---> 8
+        linear_out = self.linear_net(x)
+        x = self.dropout(linear_out)
+        x = self.norm2(x)
+
+        return x
 
 def train():
     parser = argparse.ArgumentParser()
@@ -38,7 +88,7 @@ def train():
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
-    init_with_given_model_params = True
+    init_with_given_model_params = False
     continue_with_given_model = False
     model_to_continue = 'my_models/submission_models/SAC_c8__11504.zip'
 
@@ -51,9 +101,15 @@ def train():
     env = CityEnvForTraining(env)  # Environment only for training
     env.reset()
 
+    policy_kwargs = dict(activation_fn=activation_fn,
+                         net_arch=dict(pi=pi_network, qf=q_network), # Initially shared then diverging: [128, dict(vf=[256], pi=[16])]
+                         features_extractor_class=AttentionBasedFeatureExtractor,
+                         features_extractor_kwargs=dict(features_dim=8, num_heads = 2, dropout = 0.0)
+                         )
+
     # Initialize the agent
     agent = SAC(policy=policy,
-                policy_kwargs=dict(activation_fn=activation_fn, net_arch=dict(pi=pi_network, qf=q_network)),
+                policy_kwargs=policy_kwargs,
                 env=env,
                 learning_rate=learning_rate,
                 buffer_size=buffer_size,
