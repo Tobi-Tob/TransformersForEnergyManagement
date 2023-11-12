@@ -88,9 +88,9 @@ def train():
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
-    init_with_given_model_params = False
+    init_with_given_model_params = True
     continue_with_given_model = False
-    model_to_continue = 'my_models/submission_models/SAC_c8__11504.zip'
+    model_to_continue = 'my_models/submission_models/SAC_f4__20132.zip'
 
     # Initialize the training environment
     training_buildings = [1, 2, 3]
@@ -119,7 +119,6 @@ def train():
                 gamma=gamma,
                 ent_coef='auto',  # Entropy regularization coefficient, 'auto'
                 # action_noise=NormalActionNoise(0.0, 0.1), look at common.noise, helps for hard exploration problem
-                use_sde=True,
                 stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
                 tensorboard_log=log_dir,
                 verbose=2)
