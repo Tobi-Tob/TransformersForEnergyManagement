@@ -74,7 +74,7 @@ def train():
     learning_rate = 1e-4  # good between 3e-4 and 3e-3
     pi_network = [256, 256]
     q_network = [256, 256]
-    activation_fn = torch.nn.ReLU  # LeakyReLU
+    activation_fn = torch.nn.ReLU
     # features_dim = None
     # num_heads = 2
     # dropout = 0.0
@@ -119,7 +119,7 @@ def train():
                 gamma=gamma,
                 ent_coef='auto',  # Entropy regularization coefficient, 'auto'
                 # action_noise=NormalActionNoise(0.0, 0.1), look at common.noise, helps for hard exploration problem
-                use_sde=False,
+                use_sde=True,
                 stats_window_size=1,  # Window size for the rollout logging, specifying the number of episodes to average
                 tensorboard_log=log_dir,
                 verbose=2)
