@@ -46,12 +46,12 @@ class CombinedReward(RewardFunction):
         if self.current_time_step >= self.simulation_time_steps:
             self.reset()
 
-        temp_diff_reward = np.array(self._get_temp_diff_reward(observations))  # -398.46
+        temp_diff_reward = np.array(self._get_temp_diff_reward(observations))  # -398.46 # -103
         # unserved_energy_reward = np.array(self._get_unserved_energy_reward(observations))  # -56.93
-        emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
-        grid_reward = np.array(self._get_grid_reward(observations))  # -238
+        # emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
+        grid_reward = np.array(self._get_grid_reward(observations))  # -238 # -47
 
-        return temp_diff_reward + 0.05 * emission_reward + grid_reward
+        return temp_diff_reward + 2 * grid_reward
 
     def _get_temp_diff_reward(self, observations):
         """
@@ -140,21 +140,21 @@ class CombinedReward(RewardFunction):
 
         load_factor_cost v.1 --- 4_load_factor constant 0.7
         """
-        net_electricity_consumption = [o['net_electricity_consumption'] for o in observations]
-        district_electricity_consumption = sum(net_electricity_consumption)
-        self.electricity_consumption_history.append(net_electricity_consumption)
+        net_electricity_consumption_emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
+        district_electricity_consumption = sum(net_electricity_consumption_emissions)
+        self.electricity_consumption_history.append(net_electricity_consumption_emissions)
         self.electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
 
         ramping_cost = []
         for i in range(len(observations)):
             try:
-                ramping = np.clip(self.electricity_consumption_history[-2][i] - net_electricity_consumption[i], a_min=-np.inf, a_max=0)
+                ramping = np.clip(self.electricity_consumption_history[-2][i] - net_electricity_consumption_emissions[i], a_min=-np.inf, a_max=0)
             except IndexError:
                 ramping = 0
             ramping_cost.append(ramping)
         ramping_cost = np.array(ramping_cost)  # -553.55
 
-        building_electricity_consumption = np.array(net_electricity_consumption, dtype=float) * -1
+        building_electricity_consumption = np.array(net_electricity_consumption_emissions, dtype=float) * -1
         peak_cost = np.sign(building_electricity_consumption) * 0.01 * building_electricity_consumption ** 2 * np.nanmax(
             [0, district_electricity_consumption])  # -316.7
 

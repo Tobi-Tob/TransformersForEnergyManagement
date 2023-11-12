@@ -13,7 +13,7 @@ from env_wrapper import modify_obs, modify_action
 
 class SACAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, mode='ensemble', single_model=None, save_observations=False, **kwargs: Any):
+    def __init__(self, env: CityLearnEnv, mode='submission', single_model=None, save_observations=False, **kwargs: Any):
         super().__init__(env, **kwargs)
         self.mode = mode
         self.save_observations = save_observations
@@ -37,7 +37,7 @@ class SACAgent(Agent):
             self.models.append(single_model)
             self.models[0].policy.set_training_mode(False)
         else:
-            model = SAC.load("my_models/submission_models/SAC_c7__18694.zip")
+            model = SAC.load("my_models/submission_models/SAC_a13_14380.zip")
             model_id = type(model).__name__
             self.models.append(model)
             self.models[0].policy.set_training_mode(False)

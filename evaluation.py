@@ -76,9 +76,9 @@ def evaluate(config):
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
-    model = SAC.load("my_models/SAC_test\m0_1438_steps.zip")
-    agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
-    # agent = SACAgent(wrapper_env)
+    # model = SAC.load("my_models/SAC_test\m0_1438_steps.zip")
+    # agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
+    agent = SACAgent(wrapper_env)
 
     agent.set_model_index(0)
     switch_models = True

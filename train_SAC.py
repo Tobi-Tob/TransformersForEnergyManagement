@@ -71,7 +71,7 @@ def train():
 
     # Hyperparameters
     policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
-    learning_rate = 3e-4  # good between 3e-4 and 3e-3
+    learning_rate = 1e-4  # good between 3e-4 and 3e-3
     pi_network = [256, 256]
     q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
@@ -80,15 +80,15 @@ def train():
     # dropout = 0.0
     buffer_size = 10_000
     batch_size = 256
-    gamma = 1
+    gamma = 0.99
 
-    total_timesteps = 20_000  # total timesteps to run in the environment
+    total_timesteps = 30_000  # total timesteps to run in the environment
     eval_interval = 1438  # how frequent to do a validation run in the complete environment
     n_eval_episodes = 4  # do n episodes for each validation run
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
-    init_with_given_model_params = True
+    init_with_given_model_params = False
     continue_with_given_model = False
     model_to_continue = 'my_models/submission_models/SAC_c8__11504.zip'
 
