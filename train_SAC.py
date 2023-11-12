@@ -88,7 +88,7 @@ def train():
     save_interval = 1438  # save model every n timesteps
     buildings_to_remove = 0  # 0 to use all 3 buildings for training
 
-    init_with_given_model_params = False
+    init_with_given_model_params = True
     continue_with_given_model = False
     model_to_continue = 'my_models/submission_models/SAC_c8__11504.zip'
 
