@@ -283,18 +283,19 @@ SAC_f3__24446 trained with outage clipping
 ====>  Score:             0.5866643868592496 - 0.643
 Number of episodes with power outage: 5 / 15
 
-Total agent time: 32.56s
-SAC_f3__24446 trained with outage clipping but not used for validation
-0.1    Carbon emissions   0.9571
-0.3    Unmet hours        0.0882
-0.075  Ramping            0.9629
-0.075  Load factor        1.0090
-0.075  Daily peak         0.9476
-0.075  All-time peak      0.9317
-0.15   Thermal resilience 0.5766
-0.15   Unserved energy    0.6514
-====>  Score:             0.595455898064072
-Number of episodes with power outage: 6 / 30
+{'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 20132, 'learning_rate': 0.0001} CombinedReward
+Total agent time: 36.31s
+SAC_f4__20132
+0.1    Carbon emissions   0.9868
+0.3    Unmet hours        0.1337
+0.075  Ramping            0.9422
+0.075  Load factor        0.9642
+0.075  Daily peak         0.9215
+0.075  All-time peak      0.9599
+0.15   Thermal resilience 0.4668
+0.15   Unserved energy    0.6659
+====>  Score:             0.5928023654815971
+Number of episodes with power outage: 7 / 15
 
 
 

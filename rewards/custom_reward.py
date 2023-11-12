@@ -51,7 +51,7 @@ class CombinedReward(RewardFunction):
         # emission_reward = np.array(self._get_emission_reward(observations))  # -1147.92
         grid_reward = np.array(self._get_grid_reward(observations))  # -238 # -47
 
-        return temp_diff_reward + 3 * grid_reward
+        return temp_diff_reward + 5 * grid_reward
 
     def _get_temp_diff_reward(self, observations):
         """
@@ -60,7 +60,7 @@ class CombinedReward(RewardFunction):
         indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
         indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
         temperature_diff = np.abs(indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point)
-        power_outage = np.array([o['power_outage'] for o in observations])
+        # power_outage = np.array([o['power_outage'] for o in observations])
 
         reward = []
         for i in range(len(observations)):
