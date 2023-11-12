@@ -17,28 +17,25 @@ from utils import init_environment, CustomCallback
 
 class AttentionBasedFeatureExtractor(BaseFeaturesExtractor):
     """
+    Not used
     :param observation_space: (gym.Space)
-    :param features_dim: (int) Number of features extracted.
-        This corresponds to the number of unit for the last layer.
     """
 
-    def __init__(self, observation_space, features_dim, num_heads = 1, dropout = 0.0):
+    def __init__(self, observation_space, features_dim=None, num_heads = 1, dropout = 0.0):
         self.input_dim = get_flattened_obs_dim(observation_space)
+        if features_dim is None:
+            features_dim = self.input_dim
         self.num_heads = num_heads
         self.dropout = dropout
         super().__init__(observation_space, features_dim=features_dim)
 
         # Self Attention block
         self.self_attention = nn.MultiheadAttention(embed_dim=self.input_dim, num_heads=self.num_heads, dropout=self.dropout)
-        # TODO embed_dim = 1? How to use attention for scalar values?
 
         # linear block
-        self.linear_net = nn.Sequential(
-            nn.Linear(self.input_dim, self.input_dim),
-            nn.Dropout(self.dropout),
-            nn.ReLU(inplace=False),
-            nn.Linear(self.input_dim, self.features_dim),
-        )
+        # self.linear_net = nn.Sequential(
+        #     nn.Linear(self.input_dim, self.features_dim),
+        #     nn.Dropout(self.dropout))
 
         # Layers to apply in between the main layers
         self.flatten = nn.Flatten()
@@ -52,13 +49,13 @@ class AttentionBasedFeatureExtractor(BaseFeaturesExtractor):
 
         # Attention block: 26 ---> 26
         attention_out, _ = self.self_attention(x, x, x)
-        x = x + self.dropout(attention_out)  # residual connection? TODO
-        x = self.norm1(x)  # Use norm? TODO
+        x = x + self.dropout(attention_out)
+        x = self.norm1(x)
 
         # Linear block:  26 ---> 8
-        linear_out = self.linear_net(x)
-        x = self.dropout(linear_out)
-        x = self.norm2(x)
+        # linear_out = self.linear_net(x)
+        # x = self.dropout(linear_out)
+        # x = self.norm2(x)
 
         return x
 
@@ -78,11 +75,14 @@ def train():
     pi_network = [256, 256]
     q_network = [256, 256]
     activation_fn = torch.nn.ReLU  # LeakyReLU
+    # features_dim = None
+    # num_heads = 2
+    # dropout = 0.0
     buffer_size = 10_000
     batch_size = 256
-    gamma = 0.99
+    gamma = 1
 
-    total_timesteps = 30_000  # total timesteps to run in the environment
+    total_timesteps = 20_000  # total timesteps to run in the environment
     eval_interval = 1438  # how frequent to do a validation run in the complete environment
     n_eval_episodes = 4  # do n episodes for each validation run
     save_interval = 1438  # save model every n timesteps
@@ -103,8 +103,8 @@ def train():
 
     policy_kwargs = dict(activation_fn=activation_fn,
                          net_arch=dict(pi=pi_network, qf=q_network), # Initially shared then diverging: [128, dict(vf=[256], pi=[16])]
-                         features_extractor_class=AttentionBasedFeatureExtractor,
-                         features_extractor_kwargs=dict(features_dim=8, num_heads = 2, dropout = 0.0)
+                         # features_extractor_class=AttentionBasedFeatureExtractor,
+                         # features_extractor_kwargs=dict(features_dim=features_dim, num_heads = num_heads, dropout = dropout)
                          )
 
     # Initialize the agent
