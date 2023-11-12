@@ -286,15 +286,16 @@ Number of episodes with power outage: 5 / 15
 Total agent time: 32.56s
 SAC_f3__24446 trained with outage clipping but not used for validation
 0.1    Carbon emissions   0.9571
-0.3    Unmet hours        0.0881
-0.075  Ramping            0.9626
-0.075  Load factor        1.0091
-0.075  Daily peak         0.9475
+0.3    Unmet hours        0.0882
+0.075  Ramping            0.9629
+0.075  Load factor        1.0090
+0.075  Daily peak         0.9476
 0.075  All-time peak      0.9317
-0.15   Thermal resilience 0.5566
-0.15   Unserved energy    0.5514
-====>  Score:             0.5771565898064072
-Number of episodes with power outage: 3 / 15
+0.15   Thermal resilience 0.5766
+0.15   Unserved energy    0.6514
+====>  Score:             0.595455898064072
+Number of episodes with power outage: 6 / 30
+
 
 
 
