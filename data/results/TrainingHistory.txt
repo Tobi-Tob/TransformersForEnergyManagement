@@ -280,7 +280,7 @@ SAC_f3__24446 trained with outage clipping
 0.075  All-time peak      0.9317
 0.15   Thermal resilience 0.45
 0.15   Unserved energy    0.724
-====>  Score:             0.5866643868592496
+====>  Score:             0.5866643868592496 - 0.643
 Number of episodes with power outage: 5 / 15
 
 Total agent time: 32.56s
@@ -295,6 +295,8 @@ SAC_f3__24446 trained with outage clipping but not used for validation
 0.15   Unserved energy    0.6514
 ====>  Score:             0.595455898064072
 Number of episodes with power outage: 6 / 30
+
+
 
 
 
