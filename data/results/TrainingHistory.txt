@@ -248,13 +248,53 @@ Number of episodes with power outage: 8 / 15
 
 
 
-777368851142
-one_minus_thermal_resilience_proportion
-539682539683
-power_outage_normalized_unserved_energy_total
-476619340318
-average_score
-525223731995
+policy = 'MlpPolicy'  # Multi Layer Perceptron Policy
+    learning_rate = 1e-4  # good between 3e-4 and 3e-3
+    pi_network = [256, 256]
+    q_network = [256, 256]
+    activation_fn = torch.nn.ReLU  # LeakyReLU
+    # features_dim = None
+    # num_heads = 2
+    # dropout = 0.0
+    buffer_size = 10_000
+    batch_size = 256
+    gamma = 0.99
+
+    total_timesteps = 30_000  # total timesteps to run in the environment
+    eval_interval = 1438  # how frequent to do a validation run in the complete environment
+    n_eval_episodes = 4  # do n episodes for each validation run
+    save_interval = 1438  # save model every n timesteps
+    buildings_to_remove = 0  # 0 to use all 3 buildings for training
+
+    init_with_given_model_params = False
+    continue_with_given_model = False
+
+{'model_id': 'SAC', 'mode': 'submission', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 24446, 'learning_rate': 0.0001} CombinedReward
+Total agent time: 34.62s
+SAC_f3__24446 trained with outage clipping
+0.1    Carbon emissions   0.9569
+0.3    Unmet hours        0.0864
+0.075  Ramping            0.9637
+0.075  Load factor        1.0094
+0.075  Daily peak         0.9478
+0.075  All-time peak      0.9317
+0.15   Thermal resilience 0.45
+0.15   Unserved energy    0.724
+====>  Score:             0.5866643868592496
+Number of episodes with power outage: 5 / 15
+
+Total agent time: 32.56s
+SAC_f3__24446 trained with outage clipping but not used for validation
+0.1    Carbon emissions   0.9571
+0.3    Unmet hours        0.0881
+0.075  Ramping            0.9626
+0.075  Load factor        1.0091
+0.075  Daily peak         0.9475
+0.075  All-time peak      0.9317
+0.15   Thermal resilience 0.5566
+0.15   Unserved energy    0.5514
+====>  Score:             0.5771565898064072
+Number of episodes with power outage: 3 / 15
 
 
 

@@ -37,7 +37,7 @@ class SACAgent(Agent):
             self.models.append(single_model)
             self.models[0].policy.set_training_mode(False)
         else:
-            model = SAC.load("my_models/submission_models/SAC_a13_14380.zip")
+            model = SAC.load("my_models/submission_models/SAC_f3__24446.zip")
             model_id = type(model).__name__
             self.models.append(model)
             self.models[0].policy.set_training_mode(False)

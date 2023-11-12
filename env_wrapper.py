@@ -114,9 +114,9 @@ def modify_action(action: List[ndarray], obs: List[List[float]], metadata) -> Li
         action[i][1] = action[i][1] / electrical_storage_capacity[i]  # electrical_storage_action: [1, 4, 7]
         action[i][2] = action[i][2] / cooling_nominal_powers[i]  # cooling_device_action: [2, 5, 8]
 
-        if obs_building_level[10 + 11 * i] == 1:  # if outage do not allow to fill the storages
-            action[i][0] = np.clip(action[i][0], a_min=-np.inf, a_max=0)  # dhw_storage_action
-            action[i][1] = np.clip(action[i][1], a_min=-np.inf, a_max=0)  # electrical_storage_action
+        # if obs_building_level[10 + 11 * i] == 1:  # if outage do not allow to fill the storages
+        #     action[i][0] = np.clip(action[i][0], a_min=-np.inf, a_max=0)  # dhw_storage_action
+        #     action[i][1] = np.clip(action[i][1], a_min=-np.inf, a_max=0)  # electrical_storage_action
 
     return [np.concatenate(action).tolist()]
 
