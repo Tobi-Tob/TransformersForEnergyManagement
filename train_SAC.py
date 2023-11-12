@@ -74,7 +74,7 @@ def train():
     learning_rate = 1e-4  # good between 3e-4 and 3e-3
     pi_network = [256, 256]
     q_network = [256, 256]
-    activation_fn = torch.nn.ReLU
+    activation_fn = torch.nn.RReLU
     # features_dim = None
     # num_heads = 2
     # dropout = 0.0
