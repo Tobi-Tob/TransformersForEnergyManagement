@@ -48,8 +48,8 @@ class DecisionTransformerCityLearnDataCollator:
         if self.max_ep_len > 4096:
           warnings.warn("max_ep_len over 4096. Error while training expected, please lower max_ep_len")
 
-        np.save('my_models/Decision_Transformer/state_mean.npy', self.state_mean)
-        np.save('my_models/Decision_Transformer/state_std.npy', self.state_std)
+        np.save('my_models/Decision_Transformer/DT_test/state_mean.npy', self.state_mean)
+        np.save('my_models/Decision_Transformer/DT_test/state_std.npy', self.state_std)
 
         traj_lens = np.array(traj_lens)
         self.p_sample = traj_lens / sum(traj_lens)

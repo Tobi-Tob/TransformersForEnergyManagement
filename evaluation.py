@@ -1,16 +1,13 @@
 from datetime import datetime
-
-import datasets
 import numpy as np
 import time
 import os
 from random import randint
-
-import pandas as pd
-
-import utils
+import datasets
 from citylearn.citylearn import CityLearnEnv
 
+import utils
+from agents.DT_agent import DTAgent
 from agents.ppo_agent import PPOAgent
 from agents.sac_agent import SACAgent
 from agents.zero_agent import ZeroAgent
@@ -74,7 +71,7 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
 
 def evaluate(config):
     print("========================= Starting Evaluation =========================")
-    generate_data = True
+    generate_data = False
     if generate_data:
         print('Collecting Data...')
 
@@ -82,7 +79,9 @@ def evaluate(config):
 
     # model = SAC.load("my_models/SAC_test\m0_1438_steps.zip")
     # agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
-    agent = SACAgent(wrapper_env, save_observations=True if generate_data else False)
+    # agent = SACAgent(wrapper_env, save_observations=True if generate_data else False)
+
+    agent = DTAgent(wrapper_env, 'my_models/Decision_Transformer/DT_test/')
 
     agent.set_model_index(0)
 
@@ -102,15 +101,11 @@ def evaluate(config):
     action_sum = np.zeros(len(env.buildings) * 3)
 
     dataset = []
-    observation_data = []
-    next_observation_data = []
-    action_data = []
     reward_data = []
     done_data = []
+
     try:
         while True:
-            if generate_data:
-                observation_data.append(observations)
 
             observations, reward, done, _ = env.step(actions)
 
@@ -186,21 +181,14 @@ def evaluate(config):
     if generate_data:
         print("Amount Of Sequences: ", len(dataset))
         total_values = (2 * len(dataset[0]['observations'][0]) + len(dataset[0]['actions'][0]) + 2) * len(dataset[0]['actions']) * len(dataset)
-        print("Total values to store: ", total_values) # 123120
+        print("Total values to store: ", total_values)
 
         file_name = 'test'
         file_info = f"_{len(dataset)}"
         file_extension = ".pkl"
         file_path = "./data/DT_data/" + file_name + file_info + file_extension
 
-        # create or overwrite pickle file
-        # with open(file_path, "wb") as f:
-        #    pickle.dump(dataset, f)
-
-        # ds = datasets.Dataset.from_dict(dataset)
-
-        #datasets.Dataset.from_pandas(pd.DataFrame(data=dataset)).save_to_disk(file_path)
-
+        # Create a Dataset object from the list of dict and save it in file_path
         datasets.Dataset.from_dict({k: [s[k] for s in dataset] for k in dataset[0].keys()}).save_to_disk(file_path)
 
         print("========================= Writing Completed ============================")
