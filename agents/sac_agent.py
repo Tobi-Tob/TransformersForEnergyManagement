@@ -61,6 +61,8 @@ class SACAgent(Agent):
         )
         if self.save_observations:
             self.all_observations = []
+            self.observation_data = []
+            self.action_data = []
         # print(self.models[0].policy)
         # SACPolicy(
         #   (actor): Actor(
@@ -149,6 +151,10 @@ class SACAgent(Agent):
 
         self.current_timestep += 1
 
+        if self.save_observations:
+            self.observation_data.append(obs_modified)
+            self.action_data.append(actions)
+
         return modify_action(actions, observations, self.building_metadata)
 
     def predict_obs_value(self, observations):
@@ -175,6 +181,8 @@ class SACAgent(Agent):
             if self.model_index >= len(self.models):
                 self.model_index = 0
 
+    def get_obs_and_action_data(self):
+        return self.observation_data, self.action_data
     def print_normalizations(self):
         if self.save_observations:
             print('sum:')

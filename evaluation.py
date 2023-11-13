@@ -1,11 +1,12 @@
 from datetime import datetime
 
+import datasets
 import numpy as np
 import time
 import os
 from random import randint
 
-from stable_baselines3 import SAC
+import pandas as pd
 
 import utils
 from citylearn.citylearn import CityLearnEnv
@@ -73,15 +74,17 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
 
 def evaluate(config):
     print("========================= Starting Evaluation =========================")
+    generate_data = True
+    if generate_data:
+        print('Collecting Data...')
 
     env, wrapper_env = create_citylearn_env(config, SubmissionReward)
 
     # model = SAC.load("my_models/SAC_test\m0_1438_steps.zip")
     # agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
-    agent = SACAgent(wrapper_env)
+    agent = SACAgent(wrapper_env, save_observations=True if generate_data else False)
 
     agent.set_model_index(0)
-    switch_models = True
 
     env = update_power_outage_random_seed(env, randint(0, 99999))
     observations = env.reset()
@@ -97,9 +100,23 @@ def evaluate(config):
     episode_metrics = []
     J = 0
     action_sum = np.zeros(len(env.buildings) * 3)
+
+    dataset = []
+    observation_data = []
+    next_observation_data = []
+    action_data = []
+    reward_data = []
+    done_data = []
     try:
         while True:
+            if generate_data:
+                observation_data.append(observations)
+
             observations, reward, done, _ = env.step(actions)
+
+            if generate_data:
+                reward_data.append(reward)
+                done_data.append(done)
 
             J += sum(reward)
             action_sum += np.abs(np.array(actions[0]))
@@ -119,8 +136,25 @@ def evaluate(config):
                 J = 0
                 action_sum = np.zeros(len(env.buildings) * 3)
 
-                if switch_models:
-                    agent.next_model_index()
+                if generate_data:
+                    observation_data, action_data = agent.get_obs_and_action_data()
+                    for b in range(len(env.buildings)):
+                        building_obs_data = [np.array(all_buildings_obs[b]) for all_buildings_obs in observation_data]
+                        building_next_obs_data = building_obs_data[1:]
+                        building_next_obs_data.append(building_obs_data[-1])
+                        building_obs_data = np.array(building_obs_data)
+                        building_next_obs_data = np.array(building_next_obs_data)
+                        building_act_data = np.array([all_buildings_act[b] for all_buildings_act in action_data])
+                        building_rew_data = np.array([all_buildings_rew[b] for all_buildings_rew in reward_data])
+                        dict_building_i = {
+                            "observations": building_obs_data,
+                            "next_observations": building_next_obs_data,
+                            "actions": building_act_data,
+                            "rewards": building_rew_data,
+                            "dones": np.array(done_data)
+                        }
+                        dataset.append(dict_building_i)
+
                 env = update_power_outage_random_seed(env, randint(0, 99999))
                 observations = env.reset()
 
@@ -148,6 +182,31 @@ def evaluate(config):
     utils.print_metrics(episode_metrics)
 
     agent.print_normalizations()
+
+    if generate_data:
+        print("Amount Of Sequences: ", len(dataset))
+        total_values = (2 * len(dataset[0]['observations'][0]) + len(dataset[0]['actions'][0]) + 2) * len(dataset[0]['actions']) * len(dataset)
+        print("Total values to store: ", total_values) # 123120
+
+        file_name = 'test'
+        file_info = f"_{len(dataset)}"
+        file_extension = ".pkl"
+        file_path = "./data/DT_data/" + file_name + file_info + file_extension
+
+        # create or overwrite pickle file
+        # with open(file_path, "wb") as f:
+        #    pickle.dump(dataset, f)
+
+        # ds = datasets.Dataset.from_dict(dataset)
+
+        #datasets.Dataset.from_pandas(pd.DataFrame(data=dataset)).save_to_disk(file_path)
+
+        datasets.Dataset.from_dict({k: [s[k] for s in dataset] for k in dataset[0].keys()}).save_to_disk(file_path)
+
+        print("========================= Writing Completed ============================")
+        print("==> Data saved in", file_path, utils.get_string_file_size(file_path))
+
+        # utils.check_data_structure(file_path)
 
 
 if __name__ == '__main__':

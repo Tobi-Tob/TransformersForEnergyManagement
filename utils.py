@@ -1,3 +1,5 @@
+import os
+import pickle
 from random import randint
 
 import numpy as np
@@ -104,6 +106,70 @@ def print_metrics(episode_metrics):
         print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
         print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
+def get_string_file_size(file):
+    file_size = os.stat(file).st_size
+    if file_size > 1e+9:
+        string_byte = "(" + str(round(file_size / 1e+9)) + " GB)"
+    elif file_size > 1e+6:
+        string_byte = "(" + str(round(file_size / 1e+6)) + " MB)"
+    elif file_size > 1e+3:
+        string_byte = "(" + str(round(file_size / 1e+3)) + " kB)"
+    else:
+        string_byte = "(" + str(round(file_size)) + " Byte)"
+
+    return string_byte
+
+def check_data_structure(file):
+
+    with open(file, "rb") as f:
+        data = pickle.load(f)
+
+        print("data ", type(data), "length: ", len(data))
+        dict0 = data[0]
+        print("data[0] ", type(dict0), "length: ", len(dict0))
+        print("data[0].keys() ", dict0.keys())
+        print()
+        observations = dict0['observations']
+        print("observations ", type(observations), "length: ", len(observations))
+        observations0 = observations[0]
+        print("observations[0] ", type(observations0), "length: ", len(observations0))
+        observations00 = observations[0][0]
+        print("observations[0][0] ", type(observations00))
+        print()
+        next_observations = dict0['next_observations']
+        print("next_observations ", type(next_observations), "length: ", len(next_observations))
+        next_observations0 = next_observations[0]
+        print("next_observations[0] ", type(next_observations0), "length: ", len(next_observations0))
+        next_observations00 = next_observations[0][0]
+        print("next_observations[0][0] ", type(next_observations00))
+        print()
+        actions = dict0['actions']
+        print("actions ", type(actions), "length: ", len(actions))
+        actions0 = actions[0]
+        print("actions[0] ", type(actions0), "length: ", len(actions0))
+        actions00 = actions[0][0]
+        print("actions[0][0] ", type(actions00))
+        print()
+        rewards = dict0['rewards']
+        print("rewards ", type(rewards), "length: ", len(rewards))
+        rewards0 = rewards[0]
+        print("rewards[0] ", type(rewards0))
+        print()
+        terminals = dict0['terminals']
+        print("terminals ", type(terminals), "length: ", len(terminals))
+        terminals0 = terminals[0]
+        print("terminals[0] ", type(terminals0))
+        print()
+        print("========================= Data Size =============================")
+        length = 0
+        for d in data:
+            if len(d["observations"]) > length:
+                length = len(d["observations"])
+
+        print("Amount Of Sequences: ", len(data))
+        print("Longest Sequence: ", length)
+
+    print(file, get_string_file_size(file))
 
 def init_environment(buildings_to_use, simulation_start_end=None, reward_function=SubmissionReward, **kwargs) -> CityLearnEnv:
     r"""Initialize `CityLearnEnv` and returns the environment

@@ -2,6 +2,7 @@ CityLearn==2.1b12
 numpy
 stable_baselines3[extra]
 torch
+transformers
 tensorboard
 shimmy
 tqdm
