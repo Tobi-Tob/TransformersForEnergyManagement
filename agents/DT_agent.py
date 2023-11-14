@@ -25,8 +25,8 @@ class DTAgent(Agent):
         # print(model.eval())
         self.model = model
 
-        Target_Return = -1
-        self.scale = 1000
+        Target_Return = -100
+        self.scale = 1
         self.state_dim = self.model.config.state_dim
         self.act_dim = self.model.config.act_dim
         self.context_length = self.model.config.max_length
@@ -37,14 +37,15 @@ class DTAgent(Agent):
         self.mean = np.load(model_path + '/state_mean.npy')
         self.std = np.load(model_path + '/state_std.npy')
         self.current_timestep = 0
+        self.n_buildings = len(env.get_metadata()['buildings'])
 
-        self.state_history = None
-        self.action_history = None
-        self.return_to_go_history = None
-        self.timestep_history = None
+        self.state_history = [torch.zeros(1 ,self.context_length, self.state_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.action_history = [torch.zeros(1 ,self.context_length, self.act_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.reward_history = [torch.zeros(self.context_length, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.return_to_go_history = [self.TR * torch.ones(1 ,self.context_length, 1, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.timestep_history = torch.zeros(1, self.context_length, device=self.device, dtype=torch.int)
 
         self.model_id = type(model).__name__
-
 
         SGF = SolarGenerationForecaster()
         TF = TemperatureForecaster()
@@ -64,44 +65,69 @@ class DTAgent(Agent):
 
     def register_reset(self, observations):
         """ Register reset needs the first set of actions after reset """
-        self._reset()
-        self.current_timestep = 0
+        self.reset()
+        self.reward_function.reset()
         for forecaster in self.forecaster.values():
             forecaster.reset()
+
+        self.current_timestep = 0
+        self.state_history = [torch.zeros(1, self.context_length, self.state_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.action_history = [torch.zeros(1, self.context_length, self.act_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.reward_history = [torch.zeros(self.context_length, device=self.device, dtype=torch.float32)] * self.n_buildings
+        print('Return-to-go at episode end:', [int(self.return_to_go_history[i][0, 0, -1].detach().item()) for i in range(self.n_buildings)])
+        self.return_to_go_history = [self.TR * torch.ones(1, self.context_length, 1, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.timestep_history = torch.zeros(1, self.context_length, device=self.device, dtype=torch.int)
 
         return self.predict(observations)
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
         if self.current_timestep is 0:
-            current_reward = np.zeros(len(self.env.get_metadata()['buildings']))
+            all_rewards = np.zeros(len(self.env.get_metadata()['buildings']))
         else:
-            current_reward = self.reward_function.calculate(observations=observations)
+            all_rewards = self.reward_function.calculate(observations=observations)
+
         obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)
         action_list = []
-        for i in range(len(obs_modified)):
-            state = np.array(obs_modified[i])
-            states = torch.from_numpy(state).reshape(1, 1, self.state_dim).to(device=self.device, dtype=torch.float32)
-            actions = torch.zeros((1, 1, self.act_dim), device=self.device, dtype=torch.float32)
-            rewards = torch.zeros(1, 1, device=self.device, dtype=torch.float32)
-            target_return = torch.tensor(self.TR, dtype=torch.float32).reshape(1, 1)
-            timesteps = torch.tensor(0, device=self.device, dtype=torch.long).reshape(1, 1)
-            attention_mask = torch.zeros(1, 1, device=self.device, dtype=torch.float32)
 
-            with torch.no_grad():
-                state_prediction, action_prediction, return_prediction = self.model(
-                    states=states,  # TODO Norm
-                    actions=actions,
-                    rewards=rewards,
-                    returns_to_go=target_return,
-                    timesteps=timesteps,
+        self.timestep_history = torch.cat([self.timestep_history[:, -self.context_length+1:],
+                                           torch.ones(1, 1, device=self.device, dtype=torch.int) * self.current_timestep], dim=1)
+
+        for i in range(self.n_buildings):
+            with ((torch.no_grad())):
+                state = (np.array(obs_modified[i]) - self.mean) / self.std  # normalize state with mean and std from training
+                state = torch.from_numpy(state).reshape(1, 1, self.state_dim).to(device=self.device, dtype=torch.float32)  # to tensor
+                reward = torch.tensor(all_rewards[i], device=self.device, dtype=torch.float32).reshape(1)
+
+                self.state_history[i] = \
+                    torch.cat([self.state_history[i][:, -self.context_length+1:], state], dim=1)  # append history before model call
+                self.reward_history[i] = \
+                    torch.cat([self.reward_history[i][-self.context_length+1:], reward], dim=0)
+                pred_return = (self.return_to_go_history[i][0, -1] - (reward / self.scale)).reshape(1, 1, 1)
+                self.return_to_go_history[i] = \
+                    torch.cat([self.return_to_go_history[i][:, -self.context_length+1:], pred_return], dim=1)
+
+                number_accessible_states = np.clip(self.current_timestep + 1, a_min=1, a_max=self.context_length)
+                zero_padding = self.context_length - number_accessible_states
+                assert number_accessible_states + zero_padding == self.context_length
+                attention_mask = torch.cat([torch.zeros(zero_padding), torch.ones(number_accessible_states)]).to(dtype=torch.float32).reshape(1, -1)
+
+                state_prediction, action_prediction, return_prediction = self.model(  # predicts the next K steps
+                    states=self.state_history[i],
+                    actions=self.action_history[i],
+                    rewards=self.reward_history[i],
+                    returns_to_go=self.return_to_go_history[i],
+                    timesteps=self.timestep_history,
                     attention_mask=attention_mask,
-                    return_dict=False,
-                )
-            action = action_prediction[0, -1]  # <class 'torch.Tensor'> tensor([-0.2093,  0.5136,  0.0752])
-            actions[-1] = action
-            action = action.detach().cpu().numpy()  # <class 'numpy.ndarray'> [-0.20933297  0.51364404  0.07517052]
+                    return_dict=False)
 
-            action_list.append(action)
+                action = action_prediction[0, -1].detach().cpu().numpy()  # <class 'numpy.ndarray'>
+
+                action_tensor = torch.from_numpy(action).reshape(1, 1, self.act_dim).to(device=self.device, dtype=torch.float32)
+                self.action_history[i] = \
+                    torch.cat([self.action_history[i][:, -self.context_length + 1:], action_tensor], dim=1) # append history after model call
+
+                # save actions for every building
+                action_list.append(action)
 
         self.current_timestep += 1
 
@@ -113,6 +139,3 @@ class DTAgent(Agent):
     def print_normalizations(self):
         print(f'{self.model_id} does not support print_normalizations')
 
-    def _reset(self):
-        self.reset()
-        self.reward_function.reset()
