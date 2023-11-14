@@ -3,6 +3,6 @@
   "authors": [
     "TobiTob"
   ],
-  "description": "Model SAC2_all_temp_4314.zip"
+  "description": "Decision Transformer Model trained on collected data from SAC agents"
 }
 

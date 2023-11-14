@@ -15,18 +15,18 @@ from rewards.custom_reward import CombinedReward
 
 class DTAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, model_path):
+    def __init__(self, env: CityLearnEnv, model_path='my_models/Decision_Transformer/DT_test/'):
         super().__init__(env)
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        Target_Return = -300
+        self.scale = 1
 
         model = DecisionTransformerModel.from_pretrained(model_path, local_files_only=True)
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         model = model.to(self.device)
         # print(model.eval())
         self.model = model
 
-        Target_Return = -100
-        self.scale = 1
         self.state_dim = self.model.config.state_dim
         self.act_dim = self.model.config.act_dim
         self.context_length = self.model.config.max_length
