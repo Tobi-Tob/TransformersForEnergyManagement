@@ -10,6 +10,9 @@ from env_wrapper import modify_obs, modify_action
 
 from transformers import DecisionTransformerModel
 
+from rewards.custom_reward import CombinedReward
+
+
 class DTAgent(Agent):
 
     def __init__(self, env: CityLearnEnv, model_path):
@@ -22,16 +25,23 @@ class DTAgent(Agent):
         # print(model.eval())
         self.model = model
 
+        Target_Return = -1
+        self.scale = 1000
         self.state_dim = self.model.config.state_dim
         self.act_dim = self.model.config.act_dim
         self.context_length = self.model.config.max_length
-        self.scale = 1000
-        Target_Return = -1
         self.TR = Target_Return / self.scale
+
+        self.reward_function = CombinedReward(env.get_metadata()['buildings'][0])
 
         self.mean = np.load(model_path + '/state_mean.npy')
         self.std = np.load(model_path + '/state_std.npy')
         self.current_timestep = 0
+
+        self.state_history = None
+        self.action_history = None
+        self.return_to_go_history = None
+        self.timestep_history = None
 
         self.model_id = type(model).__name__
 
@@ -62,6 +72,10 @@ class DTAgent(Agent):
         return self.predict(observations)
 
     def predict(self, observations: List[List[float]], deterministic: bool = None) -> List[List[float]]:
+        if self.current_timestep is 0:
+            current_reward = np.zeros(len(self.env.get_metadata()['buildings']))
+        else:
+            current_reward = self.reward_function.calculate(observations=observations)
         obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)
         action_list = []
         for i in range(len(obs_modified)):
@@ -101,4 +115,4 @@ class DTAgent(Agent):
 
     def _reset(self):
         self.reset()
-        # TODO
+        self.reward_function.reset()

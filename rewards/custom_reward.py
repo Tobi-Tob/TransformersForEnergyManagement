@@ -39,8 +39,6 @@ class CombinedReward(RewardFunction):
         a12 temp_diff_reward + 0.1 * emission_reward + grid_reward (initialized with c8_)
         a13 temp_diff_reward + 0.05 * emission_reward + grid_reward
         """
-        if not self.central_agent:
-            raise NotImplementedError("RewardFunction only supports central agent")
         if self.simulation_time_steps is None:
             self.simulation_time_steps = self.env_metadata['simulation_time_steps']
         if self.current_time_step >= self.simulation_time_steps:
@@ -57,13 +55,28 @@ class CombinedReward(RewardFunction):
         """
         Best 2_discomfort: 0.1, 8_unserved_energy: 0.5, 7_thermal_resilience: 0.45 (all in combination with unserved_energy_reward)
         """
-        indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
-        indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
+        try:
+            indoor_dry_bulb_temperature = np.array([o['indoor_dry_bulb_temperature'] for o in observations])
+            indoor_dry_bulb_temperature_set_point = np.array([o['indoor_dry_bulb_temperature_set_point'] for o in observations])
+        except TypeError:
+            obs = observations[0]
+            obs_buildings = obs[15:21] + obs[25:]  # all building level observations (#buildings * 11)
+            assert len(obs_buildings) % 11 == 0  # 11 observations per building
+            obs_single_building = [obs_buildings[i:i + 11] for i in range(0, len(obs_buildings), 11)]
+            temperature = []
+            temperature_set_point = []
+            for b in obs_single_building:
+                temperature.append(b[0])
+                temperature_set_point.append(b[9])
+            indoor_dry_bulb_temperature = np.array(temperature)
+            indoor_dry_bulb_temperature_set_point = np.array(temperature_set_point)
+
         temperature_diff = np.abs(indoor_dry_bulb_temperature - indoor_dry_bulb_temperature_set_point)
+
         # power_outage = np.array([o['power_outage'] for o in observations])
 
         reward = []
-        for i in range(len(observations)):
+        for i in range(len(temperature_diff)):
             unmet_hours_cost = -np.clip(temperature_diff[i] - 1, a_min=0, a_max=np.inf)
             # unmet_cost = -temperature_diff[i] # linear also promising
             # thermal_resilience_cost = -temperature_diff[i]+1 if power_outage[i] == 1 else 0  # does not benefit thermal resilience
@@ -140,13 +153,25 @@ class CombinedReward(RewardFunction):
 
         load_factor_cost v.1 --- 4_load_factor constant 0.7
         """
-        net_electricity_consumption_emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
+        try:
+            net_electricity_consumption_emissions = [o['carbon_intensity'] * o['net_electricity_consumption'] for o in observations]
+        except TypeError:
+            obs = observations[0]
+            carbon_intensity = obs[14]
+            obs_buildings = obs[15:21] + obs[25:]  # all building level observations (#buildings * 11)
+            assert len(obs_buildings) % 11 == 0  # 11 observations per building
+            obs_single_building = [obs_buildings[i:i + 11] for i in range(0, len(obs_buildings), 11)]
+            elec_consumption = []
+            for b in obs_single_building:
+                elec_consumption.append(b[5])
+            net_electricity_consumption_emissions = carbon_intensity * np.array(elec_consumption)
+
         district_electricity_consumption = sum(net_electricity_consumption_emissions)
         self.electricity_consumption_history.append(net_electricity_consumption_emissions)
         self.electricity_consumption_history = self.electricity_consumption_history[-24:]  # keep last 24 hours
 
         ramping_cost = []
-        for i in range(len(observations)):
+        for i in range(len(net_electricity_consumption_emissions)):
             try:
                 ramping = np.clip(self.electricity_consumption_history[-2][i] - net_electricity_consumption_emissions[i], a_min=-np.inf, a_max=0)
             except IndexError:
