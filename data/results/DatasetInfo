@@ -1,0 +1,18 @@
+Reward: -312.46 - -284.84
+{'model_id': 'SAC', 'mode': 'ensemble', 'forecasters': ['SolarGenerationForecaster', 'TemperatureForecaster'], 'num_timesteps': 24446, 'learning_rate': 0.0001} CombinedReward
+Total agent time: 163.52s
+ensemble_f3_f4_f5
+0.1    Carbon emissions   0.9779
+0.3    Unmet hours        0.1026
+0.075  Ramping            0.9005
+0.075  Load factor        0.9856
+0.075  Daily peak         0.9386
+0.075  All-time peak      0.9607
+0.15   Thermal resilience 0.5724
+0.15   Unserved energy    0.8869
+====>  Score:             0.6313643052843588
+Number of episodes with power outage: 10 / 33
+Amount Of Sequences:  33
+Total values to store:  1352439
+========================= Writing Completed ============================
+==> Data saved in ./data/DT_data/ensemble345_33.pkl (4 kB)

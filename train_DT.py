@@ -154,25 +154,25 @@ class TrainableDT(DecisionTransformerModel):
 
         loss = torch.mean((action_preds - action_targets) ** 2)  # + return_priority * (return_preds - return_targets) ** 2)
 
-        return {"loss": loss}
+        return {"loss": loss}  # TODO test other loss functions
 
     def original_forward(self, **kwargs):
         return super().forward(**kwargs)
 
 
 def train():
-    model_name = "DT_test"
-    offline_data_path = "data/DT_data/test_9.pkl"
+    model_name = "DT_e345_1"
+    offline_data_path = "data/DT_data/ensemble345_33.pkl"
     max_ep_len = 719
-    max_len = 24
-    scale = 1000
+    max_len = 12
+    scale = 1
     context_length = 12
 
     lr = 1e-4
-    epochs = 50
+    epochs = 10
     batch_size = 64
     weight_decay = 1e-4
-    warmup_ratio = 0.1
+    warmup_ratio = 0  # 0.1
 
     try:
         dataset = load_from_disk(offline_data_path)
@@ -199,8 +199,11 @@ def train():
         weight_decay=weight_decay,
         warmup_ratio=warmup_ratio,
         optim="adamw_torch",
-        max_grad_norm=0.25,
-        logging_steps=10,
+        max_grad_norm=1,
+        logging_dir=f"logs/DT_logs/{model_name}",
+        logging_steps=1,
+        save_steps=1,
+        load_best_model_at_end=False,
         push_to_hub=False,
     )
 

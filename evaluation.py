@@ -72,7 +72,7 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
 def evaluate(config):
     print("========================= Starting Evaluation =========================")
     generate_data = False
-    file_name = 'test'
+    file_name = 'test2'
     if generate_data:
         print('Collecting Data...')
 
@@ -82,7 +82,7 @@ def evaluate(config):
     # agent = SACAgent(wrapper_env, mode='single', single_model=model, save_observations=False)
     # agent = SACAgent(wrapper_env, save_observations=True if generate_data else False)
 
-    agent = DTAgent(wrapper_env, 'my_models/Decision_Transformer/DT_test/')
+    agent = DTAgent(wrapper_env)
 
     agent.set_model_index(0)
 
@@ -97,6 +97,7 @@ def evaluate(config):
     episodes_completed = 0
     num_steps = 0
     interrupted = False
+    collected_one_non_outage_episode = False
     episode_metrics = []
     J = 0
     action_sum = np.zeros(len(env.buildings) * 3)
@@ -129,10 +130,17 @@ def evaluate(config):
                 print(f"Episode complete: {episodes_completed} | Reward: {np.round(J, decimals=2)} "
                       f"| Average Action: {np.round(action_sum / env.episode_time_steps, decimals=4)}")
                 print(f"Latest episode metrics: {metrics_df}")
-                J = 0
-                action_sum = np.zeros(len(env.buildings) * 3)
+                outage_this_episode = not np.isnan(metrics_df['power_outage_normalized_unserved_energy_total']['value'])
+                print('Outage this episode:', outage_this_episode)
+                if outage_this_episode:
+                    collect_this_episode = True
+                elif not collected_one_non_outage_episode:
+                    collect_this_episode = True
+                    collected_one_non_outage_episode = True
+                else:
+                    collect_this_episode = False
 
-                if generate_data:
+                if generate_data and collect_this_episode:
                     observation_data, action_data = agent.get_obs_and_action_data()
                     for b in range(len(env.buildings)):
                         building_obs_data = [np.array(all_buildings_obs[b]) for all_buildings_obs in observation_data]
@@ -149,7 +157,11 @@ def evaluate(config):
                             "rewards": building_rew_data,
                             "dones": np.array(done_data)
                         }
+                        print(dict_building_i)
                         dataset.append(dict_building_i)
+
+                J = 0
+                action_sum = np.zeros(len(env.buildings) * 3)
 
                 env = update_power_outage_random_seed(env, randint(0, 99999))
                 observations = env.reset()

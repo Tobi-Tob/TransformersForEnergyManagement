@@ -15,7 +15,7 @@ from rewards.custom_reward import CombinedReward
 
 class DTAgent(Agent):
 
-    def __init__(self, env: CityLearnEnv, model_path='my_models/Decision_Transformer/DT_test/'):
+    def __init__(self, env: CityLearnEnv, model_path='my_models/Decision_Transformer/DT_e345_1'):
         super().__init__(env)
 
         Target_Return = -300

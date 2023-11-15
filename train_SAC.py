@@ -21,7 +21,7 @@ class AttentionBasedFeatureExtractor(BaseFeaturesExtractor):
     :param observation_space: (gym.Space)
     """
 
-    def __init__(self, observation_space, features_dim=None, num_heads = 1, dropout = 0.0):
+    def __init__(self, observation_space, features_dim=None, num_heads=1, dropout=0.0):
         self.input_dim = get_flattened_obs_dim(observation_space)
         if features_dim is None:
             features_dim = self.input_dim
@@ -58,6 +58,7 @@ class AttentionBasedFeatureExtractor(BaseFeaturesExtractor):
         # x = self.norm2(x)
 
         return x
+
 
 def train():
     parser = argparse.ArgumentParser()
@@ -102,7 +103,7 @@ def train():
     env.reset()
 
     policy_kwargs = dict(activation_fn=activation_fn,
-                         net_arch=dict(pi=pi_network, qf=q_network), # Initially shared then diverging: [128, dict(vf=[256], pi=[16])]
+                         net_arch=dict(pi=pi_network, qf=q_network),  # Initially shared then diverging: [128, dict(vf=[256], pi=[16])]
                          # features_extractor_class=AttentionBasedFeatureExtractor,
                          # features_extractor_kwargs=dict(features_dim=features_dim, num_heads = num_heads, dropout = dropout)
                          )

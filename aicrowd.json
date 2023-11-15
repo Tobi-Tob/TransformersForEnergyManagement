@@ -3,6 +3,6 @@
   "authors": [
     "TobiTob"
   ],
-  "description": "Decision Transformer Test Model trained on collected data from SAC agents"
+  "description": "Decision Transformer Model trained on collected data from SAC agents"
 }
 

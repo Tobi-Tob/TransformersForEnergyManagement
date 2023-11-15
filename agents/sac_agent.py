@@ -183,6 +183,7 @@ class SACAgent(Agent):
 
     def get_obs_and_action_data(self):
         return self.observation_data, self.action_data
+
     def print_normalizations(self):
         if self.save_observations:
             print('sum:')
