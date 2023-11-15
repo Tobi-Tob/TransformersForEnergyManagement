@@ -22,16 +22,12 @@ class SACAgent(Agent):
         if mode in ['switch', 'ensemble']:
             self.model_index = 0
             model1 = SAC.load("my_models/submission_models/SAC_f3__24446.zip")
-            model2 = SAC.load("my_models/submission_models/SAC_f4__20132.zip")
-            model3 = SAC.load("my_models/submission_models/SAC_f5_28760.zip")
-            model4 = SAC.load("my_models/submission_models/SAC_f6__21570.zip")
-            model5 = SAC.load("my_models/submission_models/SAC_f7_21570.zip")
+            model2 = SAC.load("my_models/submission_models/SAC_f5_28760.zip")
+            model3 = SAC.load("my_models/submission_models/SAC_f7_21570.zip")
             model_id = type(model1).__name__
             self.models.append(model1)
             self.models.append(model2)
             self.models.append(model3)
-            self.models.append(model4)
-            self.models.append(model5)
             for model in self.models:
                 model.policy.set_training_mode(False)
         elif mode in ['single']:
