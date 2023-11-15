@@ -106,6 +106,7 @@ def print_metrics(episode_metrics):
         print('\033[92m' + f"{'====>':<6} {'Score:':<18} {score}")
         print('\033[0m' + f"Number of episodes with power outage: {n_episodes_with_outage} / {len(values)}")
 
+
 def get_string_file_size(file):
     file_size = os.stat(file).st_size
     if file_size > 1e+9:
@@ -119,8 +120,8 @@ def get_string_file_size(file):
 
     return string_byte
 
-def check_data_structure(file):
 
+def check_data_structure(file):
     with open(file, "rb") as f:
         data = pickle.load(f)
 
@@ -170,6 +171,7 @@ def check_data_structure(file):
         print("Longest Sequence: ", length)
 
     print(file, get_string_file_size(file))
+
 
 def init_environment(buildings_to_use, simulation_start_end=None, reward_function=SubmissionReward, **kwargs) -> CityLearnEnv:
     r"""Initialize `CityLearnEnv` and returns the environment

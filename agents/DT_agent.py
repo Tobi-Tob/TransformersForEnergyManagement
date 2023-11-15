@@ -39,10 +39,10 @@ class DTAgent(Agent):
         self.current_timestep = 0
         self.n_buildings = len(env.get_metadata()['buildings'])
 
-        self.state_history = [torch.zeros(1 ,self.context_length, self.state_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
-        self.action_history = [torch.zeros(1 ,self.context_length, self.act_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.state_history = [torch.zeros(1, self.context_length, self.state_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.action_history = [torch.zeros(1, self.context_length, self.act_dim, device=self.device, dtype=torch.float32)] * self.n_buildings
         self.reward_history = [torch.zeros(self.context_length, device=self.device, dtype=torch.float32)] * self.n_buildings
-        self.return_to_go_history = [self.TR * torch.ones(1 ,self.context_length, 1, device=self.device, dtype=torch.float32)] * self.n_buildings
+        self.return_to_go_history = [self.TR * torch.ones(1, self.context_length, 1, device=self.device, dtype=torch.float32)] * self.n_buildings
         self.timestep_history = torch.zeros(1, self.context_length, device=self.device, dtype=torch.int)
 
         self.model_id = type(model).__name__
@@ -89,7 +89,7 @@ class DTAgent(Agent):
         obs_modified = modify_obs(observations, self.forecaster, self.building_metadata, self.current_timestep)
         action_list = []
 
-        self.timestep_history = torch.cat([self.timestep_history[:, -self.context_length+1:],
+        self.timestep_history = torch.cat([self.timestep_history[:, -self.context_length + 1:],
                                            torch.ones(1, 1, device=self.device, dtype=torch.int) * self.current_timestep], dim=1)
 
         for i in range(self.n_buildings):
@@ -99,12 +99,12 @@ class DTAgent(Agent):
                 reward = torch.tensor(all_rewards[i], device=self.device, dtype=torch.float32).reshape(1)
 
                 self.state_history[i] = \
-                    torch.cat([self.state_history[i][:, -self.context_length+1:], state], dim=1)  # append history before model call
+                    torch.cat([self.state_history[i][:, -self.context_length + 1:], state], dim=1)  # append history before model call
                 self.reward_history[i] = \
-                    torch.cat([self.reward_history[i][-self.context_length+1:], reward], dim=0)
+                    torch.cat([self.reward_history[i][-self.context_length + 1:], reward], dim=0)
                 pred_return = (self.return_to_go_history[i][0, -1] - (reward / self.scale)).reshape(1, 1, 1)
                 self.return_to_go_history[i] = \
-                    torch.cat([self.return_to_go_history[i][:, -self.context_length+1:], pred_return], dim=1)
+                    torch.cat([self.return_to_go_history[i][:, -self.context_length + 1:], pred_return], dim=1)
 
                 number_accessible_states = np.clip(self.current_timestep + 1, a_min=1, a_max=self.context_length)
                 zero_padding = self.context_length - number_accessible_states
@@ -122,20 +122,22 @@ class DTAgent(Agent):
 
                 action = action_prediction[0, -1].detach().cpu().numpy()  # <class 'numpy.ndarray'>
 
+                action[2] = np.clip(action[2], a_min=0, a_max=1)  # clip cooling_device_action to be in [0,1]
+
                 action_tensor = torch.from_numpy(action).reshape(1, 1, self.act_dim).to(device=self.device, dtype=torch.float32)
                 self.action_history[i] = \
-                    torch.cat([self.action_history[i][:, -self.context_length + 1:], action_tensor], dim=1) # append history after model call
+                    torch.cat([self.action_history[i][:, -self.context_length + 1:], action_tensor], dim=1)  # append history after model call
 
                 # save actions for every building
                 action_list.append(action)
 
         self.current_timestep += 1
 
-        return modify_action(action_list, observations, self.building_metadata)
+        modified_action = modify_action(action_list, observations, self.building_metadata)
+        return modified_action
 
     def set_model_index(self, idx):
         pass
 
     def print_normalizations(self):
         print(f'{self.model_id} does not support print_normalizations')
-

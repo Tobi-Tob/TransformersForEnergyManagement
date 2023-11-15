@@ -72,6 +72,7 @@ def update_power_outage_random_seed(env: CityLearnEnv, random_seed: int) -> City
 def evaluate(config):
     print("========================= Starting Evaluation =========================")
     generate_data = False
+    file_name = 'test'
     if generate_data:
         print('Collecting Data...')
 
@@ -183,7 +184,6 @@ def evaluate(config):
         total_values = (2 * len(dataset[0]['observations'][0]) + len(dataset[0]['actions'][0]) + 2) * len(dataset[0]['actions']) * len(dataset)
         print("Total values to store: ", total_values)
 
-        file_name = 'test'
         file_info = f"_{len(dataset)}"
         file_extension = ".pkl"
         file_path = "./data/DT_data/" + file_name + file_info + file_extension

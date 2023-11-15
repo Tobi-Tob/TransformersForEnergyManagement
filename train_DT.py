@@ -1,3 +1,4 @@
+import os
 import random
 import warnings
 from dataclasses import dataclass
@@ -26,9 +27,9 @@ class DecisionTransformerCityLearnDataCollator:
     state_mean: np.array = None  # to store state means
     state_std: np.array = None  # to store state stds
     p_sample: np.array = None  # a distribution to take account trajectory lengths
-    n_traj: int = 0 # to store the number of trajectories in the dataset
+    n_traj: int = 0  # to store the number of trajectories in the dataset
 
-    def __init__(self, dataset, max_ep_len, max_len=24, scale=1000) -> None:
+    def __init__(self, dataset, model_path, max_ep_len, max_len=24, scale=1000) -> None:
         self.dataset = dataset
         self.act_dim = len(dataset[0]["actions"][0])
         self.state_dim = len(dataset[0]["observations"][0])
@@ -36,8 +37,8 @@ class DecisionTransformerCityLearnDataCollator:
         self.max_len = max_len
         self.scale = scale
         # calculate dataset stats for normalization of states
-        states = [] # List of all states of all sequences e.g. [s1,s2,s3,s1,s2,s3,s1,s2,s3]
-        traj_lens = [] # List of sequence length e.g. [3, 3, 3]
+        states = []  # List of all states of all sequences e.g. [s1,s2,s3,s1,s2,s3,s1,s2,s3]
+        traj_lens = []  # List of sequence length e.g. [3, 3, 3]
         for obs in dataset["observations"]:
             states.extend(obs)
             traj_lens.append(len(obs))
@@ -46,10 +47,10 @@ class DecisionTransformerCityLearnDataCollator:
         self.state_mean, self.state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
 
         if self.max_ep_len > 4096:
-          warnings.warn("max_ep_len over 4096. Error while training expected, please lower max_ep_len")
+            warnings.warn("max_ep_len over 4096. Error while training expected, please lower max_ep_len")
 
-        np.save('my_models/Decision_Transformer/DT_test/state_mean.npy', self.state_mean)
-        np.save('my_models/Decision_Transformer/DT_test/state_std.npy', self.state_std)
+        np.save(f'{model_path}/state_mean.npy', self.state_mean)
+        np.save(f'{model_path}//state_std.npy', self.state_std)
 
         traj_lens = np.array(traj_lens)
         self.p_sample = traj_lens / sum(traj_lens)
@@ -71,7 +72,7 @@ class DecisionTransformerCityLearnDataCollator:
             p=self.p_sample,  # reweights so we sample according to timesteps
         )
         # a batch of dataset features
-        s, a, r, d, rtg, timesteps, mask = [], [], [], [], [], [], [] # mask?
+        s, a, r, d, rtg, timesteps, mask = [], [], [], [], [], [], []  # mask?
 
         for ind in batch_inds:
             # for feature in features:
@@ -79,16 +80,16 @@ class DecisionTransformerCityLearnDataCollator:
             si = random.randint(0, len(feature["rewards"]) - 1)
 
             # get sequences from dataset
-            s.append(np.array(feature["observations"][si : si + self.max_len]).reshape(1, -1, self.state_dim))
-            a.append(np.array(feature["actions"][si : si + self.max_len]).reshape(1, -1, self.act_dim))
-            r.append(np.array(feature["rewards"][si : si + self.max_len]).reshape(1, -1, 1))
+            s.append(np.array(feature["observations"][si: si + self.max_len]).reshape(1, -1, self.state_dim))
+            a.append(np.array(feature["actions"][si: si + self.max_len]).reshape(1, -1, self.act_dim))
+            r.append(np.array(feature["rewards"][si: si + self.max_len]).reshape(1, -1, 1))
 
-            d.append(np.array(feature["dones"][si : si + self.max_len]).reshape(1, -1))
+            d.append(np.array(feature["dones"][si: si + self.max_len]).reshape(1, -1))
             timesteps.append(np.arange(si, si + s[-1].shape[1]).reshape(1, -1))
             timesteps[-1][timesteps[-1] >= self.max_ep_len] = self.max_ep_len - 1  # padding cutoff
             rtg.append(
                 self._discount_cumsum(np.array(feature["rewards"][si:]), gamma=1.0)[
-                    : s[-1].shape[1]   # TL: check the +1 removed here
+                : s[-1].shape[1]  # TL: check the +1 removed here
                 ].reshape(1, -1, 1)
             )
             if rtg[-1].shape[1] < s[-1].shape[1]:
@@ -117,7 +118,7 @@ class DecisionTransformerCityLearnDataCollator:
         timesteps = torch.from_numpy(np.concatenate(timesteps, axis=0)).long()
         mask = torch.from_numpy(np.concatenate(mask, axis=0)).float()
 
-        #print("rtg", rtg)
+        # print("rtg", rtg)
         return {
             "states": s,
             "actions": a,
@@ -158,13 +159,14 @@ class TrainableDT(DecisionTransformerModel):
     def original_forward(self, **kwargs):
         return super().forward(**kwargs)
 
+
 def train():
     model_name = "DT_test"
-    offline_data_path = "data/DT_data/test_3.pkl"
+    offline_data_path = "data/DT_data/test_9.pkl"
     max_ep_len = 719
     max_len = 24
     scale = 1000
-    context_length = 24
+    context_length = 12
 
     lr = 1e-4
     epochs = 50
@@ -172,8 +174,17 @@ def train():
     weight_decay = 1e-4
     warmup_ratio = 0.1
 
-    dataset = load_from_disk(offline_data_path)
-    collator = DecisionTransformerCityLearnDataCollator(dataset, max_ep_len, max_len, scale)
+    try:
+        dataset = load_from_disk(offline_data_path)
+    except FileNotFoundError:
+        raise FileNotFoundError(f'Dataset at path {offline_data_path} not found. You can create one using evaluation.py and set generate_data = True')
+
+    model_path = f"my_models/Decision_Transformer/{model_name}"
+    if not os.path.exists(model_path):
+        os.makedirs(model_path)
+        print(f'created path {model_path}')
+
+    collator = DecisionTransformerCityLearnDataCollator(dataset, model_path, max_ep_len, max_len, scale)
 
     config = DecisionTransformerConfig(state_dim=collator.state_dim, act_dim=collator.act_dim, max_length=context_length)
     model = TrainableDT(config)
