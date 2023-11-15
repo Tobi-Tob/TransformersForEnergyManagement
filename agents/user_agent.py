@@ -8,4 +8,4 @@ from agents.DT_agent import DTAgent
 #####                Specify your agent here                  #####
 ###################################################################
 
-SubmissionAgent = DTAgent
+SubmissionAgent = SACAgent

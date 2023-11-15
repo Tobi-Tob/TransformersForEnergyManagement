@@ -3,6 +3,6 @@
   "authors": [
     "TobiTob"
   ],
-  "description": "Decision Transformer Model DT_e345_1 trained on collected data from SAC agents"
+  "description": "Ensemble of SAC agents"
 }
 
