@@ -3,6 +3,7 @@ from citylearn.agents.rbc import BasicRBC
 
 class BasicRBCAgent(BasicRBC):
     """ Can be any subclass of citylearn.agents.base.Agent """
+
     def __init__(self, env):
         super().__init__(env)
 
