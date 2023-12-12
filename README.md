@@ -10,6 +10,8 @@ This repository is the NeurIPS 2023 Citylearn Challenge **Submission template an
 *  **The procedure** for best practices and information on how we evaluate your agent, etc.
 *  **Starter code** for you to get started!
 
+Add your root directory in file data/schemas/schema.json
+
 # Table of Contents
 
 - [Competition Overview](#competition-overview)
